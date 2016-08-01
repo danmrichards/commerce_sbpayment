@@ -5,6 +5,8 @@
  * Implements the SoftBank Payment Service for use with Drupal Commerce.
  */
 
+// TODO: Add unit tests to validate API functionality.
+
 define('COMMERCE_SBPAYMENT_BASE_URL', 'commerce/sbpayment');
 define('COMMERCE_SBPAYMENT_PAYMENT_METHOD', 'commerce_sbpayment');
 
@@ -39,3 +41,11 @@ function commerce_sbpayment_commerce_payment_method_info() {
 
   return $payment_methods;
 }
+
+// TODO: Implement menu hook for CGI notification.
+
+// TODO: Implement custom delivery callback for CGI notification.
+
+// TODO: Add default settings callback.
+
+// TODO: Add helper for saving transactions.

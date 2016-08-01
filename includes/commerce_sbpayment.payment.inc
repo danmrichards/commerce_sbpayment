@@ -12,7 +12,8 @@
  * @see commerce_checkout_pane_settings_form
  */
 function commerce_sbpayment_settings_form($settings = array()) {
-  print __FUNCTION__ . "\r\n"
+  // TODO: Implement settings form.
+  print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
 }
@@ -23,7 +24,8 @@ function commerce_sbpayment_settings_form($settings = array()) {
  * @see commerce_payment_pane_checkout_form()
  */
 function commerce_sbpayment_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
-  print __FUNCTION__ . "\r\n"
+  // TODO: Implement submit form.
+  print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
 }
@@ -34,7 +36,8 @@ function commerce_sbpayment_submit_form($payment_method, $pane_values, $checkout
  * @see commerce_payment_pane_checkout_form_validate()
  */
 function commerce_sbpayment_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
-  print __FUNCTION__ . "\r\n"
+  // TODO: Implement submit form validation.
+  print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
 }
@@ -45,7 +48,8 @@ function commerce_sbpayment_submit_form_validate($payment_method, $pane_form, $p
  * @see commerce_payment_pane_checkout_form_submit()
  */
 function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pane_values, $order) {
-  print __FUNCTION__ . "\r\n"
+  // TODO: Implement submit form submit handler.
+  print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
 }
@@ -56,7 +60,8 @@ function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pan
  * @see commerce_payment_redirect_pane_checkout_form()
  */
 function commerce_sbpayment_form_redirect_form($form, &$form_state, $order, $payment_method) {
-  print __FUNCTION__ . "\r\n"
+  // TODO: Implement redirect form.
+  print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
 }
@@ -67,7 +72,8 @@ function commerce_sbpayment_form_redirect_form($form, &$form_state, $order, $pay
  * @see commerce_payment_redirect_pane_checkout_form()
  */
 function commerce_sbpayment_redirect_form_validate($order, $payment_method) {
-  print __FUNCTION__ . "\r\n"
+  // TODO: Implement redirect form validation.
+  print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
 }
