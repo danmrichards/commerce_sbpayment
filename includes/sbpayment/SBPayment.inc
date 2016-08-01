@@ -11,18 +11,32 @@
 abstract class SBPayment {
 
   /**
-   * The test API mode flag.
+   * Test API mode flag.
    *
    * @string
    */
   const API_MODE_TEST = 'test';
 
   /**
-   * The live API mode flag.
+   * Live API mode flag.
    *
    * @string
    */
   const API_MODE_LIVE = 'live';
+
+  /**
+   * Payment field mandatory flag.
+   *
+   * @string
+   */
+  const PAYMENT_FIELD_MANDATORY = 'mandatory';
+
+  /**
+   * Payment field optional flag.
+   *
+   * @string
+   */
+  const PAYMENT_FIELD_OPTIONAL = 'optional';
 
   /**
    * What mode should the API be used in?
@@ -39,7 +53,7 @@ abstract class SBPayment {
   protected $https = TRUE;
 
   /**
-   * Data required to create a payment.
+   * Data required to create a payment keyed by field name.
    *
    * @var string[]
    */
@@ -53,9 +67,9 @@ abstract class SBPayment {
   protected $products = array();
 
   /**
-   * API base URLs for each valid mode.
+   * API base URLs for each valid mode keyed by API mode.
    *
-   * @var array
+   * @var string[]
    */
   protected $baseUrls = array(
     SBPayment::API_MODE_TEST => 'stbfep.sps-system.com',
@@ -68,14 +82,19 @@ abstract class SBPayment {
    * @param string $mode
    *   What mode should the API be used in? Must be a valid mode name as defined
    *   in this class.
+   *
+   * @return self
+   *   This instantiated SBPayment object.
    */
   public function setMode($mode) {
     if (in_array($mode, array(SBPayment::API_MODE_TEST, SBPayment::API_MODE_LIVE))) {
       $this->mode = $mode;
     }
     else {
-      throw new SBPaymentException('Invalid SoftBank API mode specified');
+      throw new SBPaymentException(t('Invalid SoftBank API mode specified'));
     }
+
+    return $this;
   }
 
   /**
@@ -83,6 +102,9 @@ abstract class SBPayment {
    *
    * @param bool $https
    *   Should API calls be made using https.
+   *
+   * @return self
+   *   This instantiated SBPayment object.
    */
   public function setHttps($https) {
     // Check we have an endpoint for the requested format.
@@ -90,18 +112,23 @@ abstract class SBPayment {
       $this->https = $https;
     }
     else {
-      throw new SBPaymentException('SoftBank HTTPS flag must be a boolean.');
+      throw new SBPaymentException(t('SoftBank HTTPS flag must be a boolean.'));
     }
+
+    return $this;
   }
 
   /**
    * Get the base URL for the current API mode.
    *
    * @return string
-   *   Base URL.
+   *   Fully qualified URL for the base of the SoftBank API.
    */
   public function getBaseUrl() {
-    return $this->baseUrls[$this->mode];
+    // Determine the protocol we're using.
+    $protocol = $this->https === TRUE ? 'https' : 'http';
+
+    return sprintf('%s://%s', $protocol, $this->baseUrls[$this->mode]);
   }
 
   /**
@@ -113,10 +140,12 @@ abstract class SBPayment {
   public abstract function getServiceUrl();
 
   /**
-   * Get a list of the fields required to create a payment.
+   * Get an associatvie array of the fields required to create a payment.
    *
    * @return string[]
-   *   Array of field names as defined in the API docuementation.
+   *   Array of field names required to create a payment. Array in the
+   *   format 'machine_name => required', where required is either
+   *   'mandatory' or 'required' as defined in this class constants.
    */
   public abstract function getPaymentFields();
 
@@ -128,7 +157,7 @@ abstract class SBPayment {
    * @param array $payment_data
    *   Associative array of payment data.
    */
-  public abstract function setPaymentData($payment_data);
+  public abstract function setPaymentData(array $payment_data);
 
   /**
    * Set the list of products that are being purchased.
@@ -136,6 +165,16 @@ abstract class SBPayment {
    * @param SBPaymentProduct[] $products
    *   List containing SoftBank product objects.
    */
-  public abstract function setProducts($products);
+  public abstract function setProducts(array $products);
+
+  /**
+   * Calculate and return the checksum value based on the payment data.
+   *
+   * This is required to sign the payment data when sending it to the API.
+   *
+   * @return string
+   *   Checksum value based on the payment data.
+   */
+  public abstract function getChecksum();
 
 }
