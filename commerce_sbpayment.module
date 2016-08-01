@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ * Implements the SoftBank Payment Service for use with Drupal Commerce.
+ */
+
+define('COMMERCE_SBPAYMENT_BASE_URL', 'commerce/sbpayment');
+define('COMMERCE_SBPAYMENT_PAYMENT_METHOD', 'commerce_sbpayment');
+
+/**
+ * Implements hook_help().
+ */
+function commerce_sbpayment_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#commerce_sbpayment':
+      $output = '<h2>' . t('Commerce SoftBank Payment Service') . '</h2>';
+      $output .= '<p>' . t('Implements the SoftBank Payment Service for use with Drupal Commerce') . '<p>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_sbpayment_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods[COMMERCE_SBPAYMENT_PAYMENT_METHOD] = array(
+    'file' => 'includes/commerce_sbpayment.payment.inc',
+    'title' => t('Commerce SoftBank Payment Service'),
+    'description' => t('Redirect users to submit payments through the SoftBank Payment Service.'),
+    'active' => TRUE,
+    'terminal' => FALSE,
+    'offsite' => TRUE,
+    'offsite_autoredirect' => TRUE,
+  );
+
+  return $payment_methods;
+}
