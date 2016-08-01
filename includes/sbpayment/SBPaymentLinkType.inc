@@ -8,7 +8,7 @@
 /**
  * Implements the SoftBank Payment 'Link Type' Service.
  */
-class SBPaymentLink extends SBPayment {
+class SBPaymentLinkType extends SBPayment {
 
   /**
    * The API endpoint for the 'Link Type' service.
@@ -82,41 +82,6 @@ class SBPaymentLink extends SBPayment {
   /**
    * {@inheritdoc}
    */
-  public function setPaymentData(array $payment_data) {
-    // Strip out any unexpected fields.
-    $payment_data = array_filter($payment_data, array($this, 'validatePaymentDataField'), ARRAY_FILTER_USE_KEY);
-
-    // Check all of the payment fields are present and the mandatory fields
-    // have been populated.
-    array_walk($this->getPaymentFields(), function ($mandatory, $field_name) use ($payment_data) {
-      // Ensure the field has been populated if it is mandatory.
-      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
-        throw new SBPaymentException(t('Mandatory payment field @field_name is not populated.', array('@field_name' => $field_name)));
-      }
-      elseif (!isset($payment_data[$field_name])) {
-        // Otherwise just ensure the field is present.
-        throw new SBPaymentException(t('Payment field @field_name is missing', array('@field_name' => $field_name)));
-      }
-    });
-
-    // Everything seems to be alright so set the data.
-    $this->paymentData = $payment_data;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setProducts(array $products) {
-    // Validate the products.
-    array_walk($products, array($this, 'validateProduct'));
-
-    // Everything seems to be alright so set the products.
-    $this->products = $products;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getChecksum() {
     // Concatenate the fields and convert encoding.
     $checksum_fields = array_reduce($this->paymentData, function ($carry, $item) {
@@ -128,28 +93,6 @@ class SBPaymentLink extends SBPayment {
 
     // Calculate the hash.
     return sha1($checksum_fields);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function validatePaymentDataField($payment_data_field) {
-    return in_array($payment_data_field, array_keys($this->getPaymentFields()));
-  }
-
-  /**
-   * Validate a product for usage with the SoftBank Payment Service.
-   *
-   * @param SBPaymentProduct $product
-   *   An instantiated product object.
-   */
-  protected function validateProduct(SBPaymentProduct $product) {
-    // Check that each of the mandatory product fields are populated.
-    foreach (SBPaymentProduct::getMandatoryFields() as $mandatory_field) {
-      if (empty($product->{$mandatory_field})) {
-        throw new SBPaymentException(t('Mandatory product field @field_name is not populated', array('@field_name' => $field_name)));
-      }
-    }
   }
 
 }

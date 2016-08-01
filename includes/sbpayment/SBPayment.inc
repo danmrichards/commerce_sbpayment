@@ -132,6 +132,49 @@ abstract class SBPayment {
   }
 
   /**
+   * Set the data required to create a payment.
+   *
+   * Each field returned from getPaymentFields() must be populated.
+   *
+   * @param array $payment_data
+   *   Associative array of payment data.
+   */
+  public function setPaymentData(array $payment_data) {
+    // Strip out any unexpected fields.
+    $payment_data = array_filter($payment_data, array($this, 'isValidPaymentDataField'), ARRAY_FILTER_USE_KEY);
+
+    // Check all of the payment fields are present and the mandatory fields
+    // have been populated.
+    array_walk($this->getPaymentFields(), function ($mandatory, $field_name) use ($payment_data) {
+      // Ensure the field has been populated if it is mandatory.
+      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
+        throw new SBPaymentException(t('Mandatory payment field @field_name is not populated.', array('@field_name' => $field_name)));
+      }
+      elseif (!isset($payment_data[$field_name])) {
+        // Otherwise just ensure the field is present.
+        throw new SBPaymentException(t('Payment field @field_name is missing', array('@field_name' => $field_name)));
+      }
+    });
+
+    // Everything seems to be alright so set the data.
+    $this->paymentData = $payment_data;
+  }
+
+  /**
+   * Set the list of products that are being purchased.
+   *
+   * @param SBPaymentProduct[] $products
+   *   List containing SoftBank product objects.
+   */
+  public function setProducts(array $products) {
+    // Validate the products.
+    array_walk($products, array($this, 'validateProduct'));
+
+    // Everything seems to be alright so set the products.
+    $this->products = $products;
+  }
+
+  /**
    * Get the service URL for the current API mode.
    *
    * @return string
@@ -150,24 +193,6 @@ abstract class SBPayment {
   public abstract function getPaymentFields();
 
   /**
-   * Set the data required to create a payment.
-   *
-   * Each field returned from getPaymentFields() must be populated.
-   *
-   * @param array $payment_data
-   *   Associative array of payment data.
-   */
-  public abstract function setPaymentData(array $payment_data);
-
-  /**
-   * Set the list of products that are being purchased.
-   *
-   * @param SBPaymentProduct[] $products
-   *   List containing SoftBank product objects.
-   */
-  public abstract function setProducts(array $products);
-
-  /**
    * Calculate and return the checksum value based on the payment data.
    *
    * This is required to sign the payment data when sending it to the API.
@@ -176,5 +201,35 @@ abstract class SBPayment {
    *   Checksum value based on the payment data.
    */
   public abstract function getChecksum();
+
+  /**
+   * Is the supplied field name a valid payment data field.
+   *
+   * @param string $payment_data_field
+   *   The name of a payment data field.
+   *
+   * @return bool
+   *   Is the supplied field name a valid one?
+   *
+   * @see getPaymentFields()
+   */
+  protected function isValidPaymentDataField($payment_data_field) {
+    return in_array($payment_data_field, array_keys($this->getPaymentFields()));
+  }
+
+  /**
+   * Validate a product for usage with the SoftBank Payment Service.
+   *
+   * @param SBPaymentProduct $product
+   *   An instantiated product object.
+   */
+  protected function validateProduct(SBPaymentProduct $product) {
+    // Check that each of the mandatory product fields are populated.
+    foreach (SBPaymentProduct::getMandatoryFields() as $mandatory_field) {
+      if (empty($product->{$mandatory_field})) {
+        throw new SBPaymentException(t('Mandatory product field @field_name is not populated', array('@field_name' => $field_name)));
+      }
+    }
+  }
 
 }
