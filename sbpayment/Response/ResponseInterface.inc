@@ -5,12 +5,26 @@
  * Contains \Commerce\SBPayment\Response\ResponseInterface.
  */
 
-namespace Commerce\SBPayment;
+namespace Commerce\SBPayment\Response;
 
 /**
  * Interface that all SoftBank response classes need to implement.
  */
 interface ResponseInterface {
+
+  /**
+   * String expected by SoftBank in the event of a succesful response.
+   *
+   * @var string
+   */
+  const RESPONSE_OK = 'OK';
+
+  /**
+   * String expected by SoftBank in the event of a failed response.
+   *
+   * @var string
+   */
+  const RESPONSE_FAIL = 'NG';
 
   /**
    * Constructor.
@@ -19,14 +33,6 @@ interface ResponseInterface {
    *   The data provided by the SoftBank API to this response.
    */
   public function __construct(array $data);
-
-  /**
-   * The type of response.
-   *
-   * @return string
-   *   A lowercase machine name for this repsonse time. e.g. cgi_notification.
-   */
-  public static function type();
 
   /**
    * Get the response string.

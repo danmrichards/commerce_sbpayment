@@ -81,6 +81,23 @@ abstract class SBPayment {
   );
 
   /**
+   * The encryption key required to generate the checksum.
+   *
+   * @var string
+   */
+  protected $hashKey;
+
+  /**
+   * Set the encryption hash key.
+   *
+   * @param string $hash_key
+   *   The specified encryption hash key.
+   */
+  public function setHashKey($hash_key) {
+    $this->hashKey = $hash_key;
+  }
+
+  /**
    * Set the API mode.
    *
    * @param string $mode
@@ -93,7 +110,7 @@ abstract class SBPayment {
    * @throws SBPaymentException
    */
   public function setMode($mode) {
-    if (in_array($mode, array($self::API_MODE_TEST, $self::API_MODE_LIVE))) {
+    if (in_array($mode, array(SBPayment::API_MODE_TEST, SBPayment::API_MODE_LIVE))) {
       $this->mode = $mode;
     }
     else {
@@ -157,7 +174,7 @@ abstract class SBPayment {
     // have been populated.
     array_walk($this->getPaymentFields(), function ($mandatory, $field_name) use ($payment_data) {
       // Ensure the field has been populated if it is mandatory.
-      if ($mandatory === $self::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
+      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
         throw new SBPaymentException(sprintf('Mandatory payment field %s is not populated.', $field_name));
       }
       elseif (!isset($payment_data[$field_name])) {
@@ -168,6 +185,16 @@ abstract class SBPayment {
 
     // Everything seems to be alright so set the data.
     $this->paymentData = $payment_data;
+  }
+
+  /**
+   * Get the list of products that are being purchased.
+   *
+   * @return SBPaymentProduct[] $products
+   *   List containing SoftBank product objects.
+   */
+  public function getProducts() {
+    return $this->products;
   }
 
   /**
@@ -193,6 +220,17 @@ abstract class SBPayment {
   public abstract function getServiceUrl();
 
   /**
+   * Get the PHP class name of the repsonse handler for this service.
+   *
+   * The class must implement the Commerce\SBPayment\Response\ResponseInterface
+   * interface.
+   *
+   * @return string
+   *   PHP class name.
+   */
+  public abstract function getResponseHandler();
+
+  /**
    * Get an associatvie array of the fields required to create a payment.
    *
    * @return string[]
@@ -209,6 +247,8 @@ abstract class SBPayment {
    *
    * @return string
    *   Checksum value based on the payment data.
+   *
+   * @throws SBPaymentException
    */
   public abstract function getChecksum();
 

@@ -136,10 +136,80 @@ function commerce_sbpayment_link_type_submit_form_submit($payment_method, $pane_
  * @see commerce_payment_redirect_pane_checkout_form()
  */
 function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order, $payment_method) {
-  // TODO: Implement redirect form.
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
+  // Ensure that the payment method has been correctly configured.
+  if (!commerce_sbpayment_link_type_validate_settings($payment_method['settings'])) {
+    drupal_set_message(t('SoftBank Payment Service: Link Type has not been configured correctly.'), 'error');
+    return array();
+  }
+
+  // Get the payment service object.
+  $payment_service_machine_name = str_replace(COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE . '_', '', $payment_method['method_id']);
+  $payment_service = commerce_sbpayment_get_service_object($payment_service_machine_name);
+
+  try {
+    // Check the payment service was correctly instantiated.
+    if ($payment_service === FALSE) {
+      throw new \Commerce\SBPayment\SBPaymentException(t('Service object could not be instantiated for machine name @machine_name', array('@machine_name' => $payment_service_machine_name)));
+    }
+
+    // Load the order wrapper.
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+    // TODO: Ensure the order total is in JPY.
+
+    // Set the gateway mode and encryption hash key.
+    $payment_service->setMode($payment_method['settings']['mode']);
+    $payment_service->setHashKey($payment_method['settings']['hash_key']);
+
+    // Prepare the fields required by the payment service.
+    $payment_fields = array(
+      'pay_method' => $order->data['softbank_pay_method'],
+      'merchant_id' => $payment_method['settings']['merchant_id'],
+      'service_id' => $payment_method['settings']['service_id'],
+      'cust_code' => $order->uid,
+      'order_id' => $order->order_number,
+      'item_id' => $order->order_id,
+      'item_name' => $order->order_number,
+      // TODO: Get the tax component of the order total.
+      // @see commerce_vat_total_amount()
+      'tax' => \Commerce\SBPayment\SBPayment::PAYMENT_FIELD_OPTIONAL,
+      'amount' => $order_wrapper->commerce_order_total->amount->value(),
+      // TODO: Research into this field and make configurable if required.
+      'pay_type' => 0,
+      // TODO: Research into this field and make configurable if required.
+      'service_type' => 0,
+      // TODO: Research into this field and make configurable if required.
+      'terminal_type' => 0,
+      'success_url' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+      'cancel_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+      'error_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+      'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $payment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+      'request_date' => date('Ymdhis'),
+    );
+
+    print_r($payment_fields);
+    die;
+
+    // Build an array of SoftBank product objects for the current order.
+
+    $form = array();
+
+    // Add the checksum value.
+    $form['sps_hashcode'] = array(
+      '#type' => 'value',
+      '#value' => $payment_service->getChecksum(),
+    );
+
+    $form['#action'] = $payment_service->getServiceUrl();
+
+    return $form;
+  }
+  catch (\Commerce\SBPayment\SBPaymentException $e) {
+    watchdog_exception('commerce_sbpayment', $e);
+    drupal_set_message(t('A problem occurred when starting the SoftBank Payment Service. Please contact an administrator.'), 'error');
+
+    return array();
+  }
 }
 
 /**

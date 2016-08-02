@@ -53,9 +53,40 @@ function commerce_sbpayment_commerce_payment_method_info() {
   return $payment_methods;
 }
 
-// TODO: Implement menu hook for CGI notification.
+/**
+ * Implements hook_menu().
+ */
+function commerce_sbpayment_menu() {
+  $items = array();
 
-// TODO: Implement custom delivery callback for CGI notification.
+  $items[COMMERCE_SBPAYMENT_BASE_URL . '/%/%commerce_order/%'] = array(
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/commerce_sbpayment.menu.inc',
+    'page callback' => 'commerce_sbpayment_notification_controller',
+    'delivery callback' => 'commerce_sbpayment_deliver',
+    'page arguments' => array(2, 3, 4),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Light weight menu delivery callback.
+ *
+ * Intended for use with payment notification routes.
+ *
+ * @param string $response
+ *   Response from callback.
+ *
+ * @see commerce_sbpayment_notification_controller()
+ * @see drupal_deliver_html_page()
+ */
+function commerce_sbpayment_deliver($response) {
+  // Default Drupal delivery callback contains a lot of heavy logic that we
+  // don't need. So we are just returning the raw callback response.
+  print $response;
+}
 
 /**
  * Get the list of available SoftBank services.
@@ -71,6 +102,40 @@ function commerce_sbpayment_services() {
       'class' => \Commerce\SBPayment\Service\LinkType::class,
     ),
   );
+}
+
+/**
+ * Get an instantiated payment service object.
+ *
+ * @param string $machine_name
+ *   Machine name of the service to instantiate.
+ *
+ * @return mixed
+ *   An instantiated service object or FALSE if invalid.
+ */
+function commerce_sbpayment_get_service_object($machine_name) {
+  $sbpayment_service = commerce_sbpayment_services()[$machine_name];
+
+  // Check we have some service info.
+  if (empty($sbpayment_service)) {
+    return FALSE;
+  }
+
+  // Check if the defined class exists and extends the correct abstract class.
+  if (!class_exists($sbpayment_service['class']) || !is_subclass_of($sbpayment_service['class'], \Commerce\SBPayment\SBPayment::class)) {
+    return FALSE;
+  }
+
+  // Instantiate the service.
+  try {
+    $sbpayment_service_object = new $sbpayment_service['class']();
+  }
+  catch (Exception $e) {
+    watchdog_exception('commerce_sbpayment', $e);
+    return FALSE;
+  }
+
+  return $sbpayment_service_object;
 }
 
 /**

@@ -8,6 +8,8 @@
 namespace Commerce\SBPayment\Service;
 
 use Commerce\SBPayment\SBPayment;
+use Commerce\SBPayment\SBPaymentException;
+use Commerce\SBPayment\Response\LinkTypeCgi;
 
 /**
  * Implements the SoftBank Payment 'Link Type' Service.
@@ -22,27 +24,17 @@ class LinkType extends SBPayment {
   protected $endpoint = 'f01/FepBuyInfoReceive.do';
 
   /**
-   * The encryption key required to generate the checksum.
-   *
-   * @var string
+   * {@inheritdoc}
    */
-  protected $hashKey;
-
-  /**
-   * Constructor.
-   *
-   * @param string $hash_key
-   *   The specified encryption key.
-   */
-  public function __construct($hash_key) {
-    $this->hashKey = $hash_key;
+  public function getServiceUrl() {
+    return sprintf('%s/%s', $this->getBaseUrl(), $this->endpoint);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getServiceUrl() {
-    return sprintf('%s/%s', $this->getBaseUrl(), $this->endpoint);
+  public function getResponseHandler() {
+    return LinkTypeCgi::class;
   }
 
   /**
@@ -77,7 +69,7 @@ class LinkType extends SBPayment {
       'free1' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'free2' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'free3' => SBPayment::PAYMENT_FIELD_OPTIONAL,
-      'free_csv_input' => SBPayment::PAYMENT_FIELD_OPTIONAL,
+      'free_csv' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'request_date' => SBPayment::PAYMENT_FIELD_MANDATORY,
       'limit_second' => SBPayment::PAYMENT_FIELD_OPTIONAL,
     );
@@ -87,6 +79,11 @@ class LinkType extends SBPayment {
    * {@inheritdoc}
    */
   public function getChecksum() {
+    // We can't continue without the hash key.
+    if (empty($this->hashKey)) {
+      throw new SBPaymentException('SoftBank hash key is missing');
+    }
+
     // Concatenate the fields and convert encoding.
     $checksum_fields = array_reduce($this->paymentData, function ($carry, $item) {
       return $carry . mb_convert_encoding($item, 'UTF-8', 'SJIS');

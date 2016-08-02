@@ -7,6 +7,8 @@
 
 namespace Commerce\SBPayment;
 
+use Exception;
+
 /**
  * A simple SoftBank Payment Service specific exception.
  */
