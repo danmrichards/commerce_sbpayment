@@ -2,13 +2,17 @@
 
 /**
  * @file
- * Contains the SBPaymentLink class.
+ * Contains \Commerce\SBPayment\Service\LinkType.
  */
+
+namespace Commerce\SBPayment\Service;
+
+use Commerce\SBPayment\SBPayment;
 
 /**
  * Implements the SoftBank Payment 'Link Type' Service.
  */
-class SBPaymentLinkType extends SBPayment {
+class LinkType extends SBPayment {
 
   /**
    * The API endpoint for the 'Link Type' service.

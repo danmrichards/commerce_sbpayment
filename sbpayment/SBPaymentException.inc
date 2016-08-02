@@ -2,8 +2,10 @@
 
 /**
  * @file
- * Contains SBPaymentException.
+ * Contains \Commerce\SBPayment\SBPaymentException.
  */
+
+namespace Commerce\SBPayment;
 
 /**
  * A simple SoftBank Payment Service specific exception.

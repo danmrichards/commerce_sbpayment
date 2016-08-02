@@ -2,13 +2,17 @@
 
 /**
  * @file
- * Contains the SBPaymentProduct class.
+ * Contains \Commerce\SBPayment\Product\LinkTypeProduct.
  */
+
+namespace Commerce\SBPayment\Product;
+
+use Commerce\SBPayment\ProductInterface;
 
 /**
  * Class to model a product for use on a SoftBank payment service request.
  */
-class SBPaymentProduct implements SBPaymentProductInterface {
+class LinkTypeProduct implements ProductInterface {
 
   /**
    * The row number the product is displayed in on the payment screen.

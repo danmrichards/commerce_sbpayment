@@ -5,13 +5,9 @@ core = 7.x
 
 configure = admin/commerce/config/payment-methods/manage/commerce_payment_commerce_sbpayment
 
-files[] = includes/sbpayment/SBPaymentException.inc
-files[] = includes/sbpayment/SBPaymentMethods.inc
-files[] = includes/sbpayment/SBPaymentProductInterface.inc
-files[] = includes/sbpayment/SBPaymentProduct.inc
-files[] = includes/sbpayment/SBPayment.inc
-files[] = includes/sbpayment/SBPaymentLinkType.inc
+autoload[sbpayment][] = Commerce\SBPayment
 
+dependencies[] = autoload
 dependencies[] = commerce
 dependencies[] = commerce_payment
 dependencies[] = commerce_order

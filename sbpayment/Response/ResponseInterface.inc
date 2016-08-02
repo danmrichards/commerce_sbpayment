@@ -2,13 +2,23 @@
 
 /**
  * @file
- * Contains SBPaymentResponseInterface.
+ * Contains \Commerce\SBPayment\Response\ResponseInterface.
  */
+
+namespace Commerce\SBPayment;
 
 /**
  * Interface that all SoftBank response classes need to implement.
  */
-interface SBPaymentResponseInterface {
+interface ResponseInterface {
+
+  /**
+   * Constructor.
+   *
+   * @param array $data
+   *   The data provided by the SoftBank API to this response.
+   */
+  public function __construct(array $data);
 
   /**
    * The type of response.
@@ -25,13 +35,5 @@ interface SBPaymentResponseInterface {
    *   The response string as expected by the SoftBank API.
    */
   public function __toString();
-
-  /**
-   * Constructor.
-   *
-   * @param array $data
-   *   The data provided by the SoftBank API to this response.
-   */
-  public function __construct(array $data);
 
 }

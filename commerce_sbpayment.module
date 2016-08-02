@@ -46,6 +46,36 @@ function commerce_sbpayment_commerce_payment_method_info() {
 
 // TODO: Implement custom delivery callback for CGI notification.
 
-// TODO: Add default settings callback.
+/**
+ * Get an array of default settings for the SoftBank Payment Service.
+ *
+ * @return array
+ *   Array of default values keyed by field name.
+ */
+function commerce_sbpayment_default_settings() {
+  return array(
+    'mode' => \Commerce\SBPayment\SBPayment::API_MODE_TEST,
+    'pay_methods' => array(),
+    'merchant_id' => '',
+    'service_id' => '',
+    'pay_type' => 0,
+    'auto_charge_type' => 0,
+    'service_type' => 0,
+    'hash_key' => '',
+  );
+}
+
+/**
+ * Get the available gateway modes.
+ *
+ * @return string[]
+ *   Array of gateway modes keyed by machine name.
+ */
+function commerce_sbpayment_mode_options() {
+  return array(
+    \Commerce\SBPayment\SBPayment::API_MODE_TEST => t('Test'),
+    \Commerce\SBPayment\SBPayment::API_MODE_LIVE => t('Live'),
+  );
+}
 
 // TODO: Add helper for saving transactions.

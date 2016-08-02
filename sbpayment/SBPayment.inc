@@ -2,8 +2,12 @@
 
 /**
  * @file
- * Contains the SBPaymentclass.
+ * Contains \Commerce\SBPayment\SBPayment.
  */
+
+namespace Commerce\SBPayment;
+
+use Commerce\SBPayment\Product\ProductInterface;
 
 /**
  * Abstract class for interacting with the SoftBank Payment Service.
@@ -85,13 +89,15 @@ abstract class SBPayment {
    *
    * @return self
    *   This instantiated SBPayment object.
+   *
+   * @throws SBPaymentException
    */
   public function setMode($mode) {
-    if (in_array($mode, array(SBPayment::API_MODE_TEST, SBPayment::API_MODE_LIVE))) {
+    if (in_array($mode, array($self::API_MODE_TEST, $self::API_MODE_LIVE))) {
       $this->mode = $mode;
     }
     else {
-      throw new SBPaymentException(t('Invalid SoftBank API mode specified'));
+      throw new SBPaymentException('Invalid SoftBank API mode specified');
     }
 
     return $this;
@@ -105,6 +111,8 @@ abstract class SBPayment {
    *
    * @return self
    *   This instantiated SBPayment object.
+   *
+   * @throws SBPaymentException
    */
   public function setHttps($https) {
     // Check we have an endpoint for the requested format.
@@ -112,7 +120,7 @@ abstract class SBPayment {
       $this->https = $https;
     }
     else {
-      throw new SBPaymentException(t('SoftBank HTTPS flag must be a boolean.'));
+      throw new SBPaymentException('SoftBank HTTPS flag must be a boolean.');
     }
 
     return $this;
@@ -138,6 +146,8 @@ abstract class SBPayment {
    *
    * @param array $payment_data
    *   Associative array of payment data.
+   *
+   * @throws SBPaymentException
    */
   public function setPaymentData(array $payment_data) {
     // Strip out any unexpected fields.
@@ -147,12 +157,12 @@ abstract class SBPayment {
     // have been populated.
     array_walk($this->getPaymentFields(), function ($mandatory, $field_name) use ($payment_data) {
       // Ensure the field has been populated if it is mandatory.
-      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
-        throw new SBPaymentException(t('Mandatory payment field @field_name is not populated.', array('@field_name' => $field_name)));
+      if ($mandatory === $self::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
+        throw new SBPaymentException(sprintf('Mandatory payment field %s is not populated.', $field_name));
       }
       elseif (!isset($payment_data[$field_name])) {
         // Otherwise just ensure the field is present.
-        throw new SBPaymentException(t('Payment field @field_name is missing', array('@field_name' => $field_name)));
+        throw new SBPaymentException(sprintf('Payment field %s is missing.', $field_name));
       }
     });
 
@@ -220,14 +230,16 @@ abstract class SBPayment {
   /**
    * Validate a product for usage with the SoftBank Payment Service.
    *
-   * @param SBPaymentProduct $product
+   * @param ProductInterface $product
    *   An instantiated product object.
+   *
+   * @throws SBPaymentException
    */
-  protected function validateProduct(SBPaymentProduct $product) {
+  protected function validateProduct(ProductInterface $product) {
     // Check that each of the mandatory product fields are populated.
-    foreach (SBPaymentProduct::getMandatoryFields() as $mandatory_field) {
+    foreach (ProductInterface::getMandatoryFields() as $mandatory_field) {
       if (empty($product->{$mandatory_field})) {
-        throw new SBPaymentException(t('Mandatory product field @field_name is not populated', array('@field_name' => $field_name)));
+        throw new SBPaymentException(sprintf('Mandatory product field %s is not populated', $field_name));
       }
     }
   }

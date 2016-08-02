@@ -12,10 +12,74 @@
  * @see commerce_checkout_pane_settings_form
  */
 function commerce_sbpayment_settings_form($settings = array()) {
-  // TODO: Implement settings form.
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
+  $form = array();
+
+  // Merge default settings into the stored settings array.
+  $settings = (array) $settings + commerce_sbpayment_default_settings();
+
+  $form['mode'] = array(
+    '#type' => 'select',
+    '#title' => t('Gateway mode'),
+    '#description' => t('The mode in which to use the SoftBank Payment Service.'),
+    '#options' => commerce_sbpayment_mode_options(),
+    '#default_value' => $settings['mode'],
+    '#required' => TRUE,
+  );
+
+  $form['pay_methods'] = array(
+    '#type' => 'select',
+    '#title' => t('Enabled payment methods'),
+    '#description' => t('Choose the payment methods available to the customer'),
+    '#multiple' => TRUE,
+    '#options' => \Commerce\SBPayment\Payment\Methods::$methods,
+    '#default_value' => $settings['pay_methods'],
+    '#size' => 15,
+    '#required' => TRUE,
+  );
+
+  $form['merchant_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Merchant ID'),
+    '#description' => t('The merchant ID provided to you by SoftBank'),
+    '#default_value' => $settings['merchant_id'],
+    '#required' => TRUE,
+  );
+
+  $form['service_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Service ID'),
+    '#description' => t('The service ID provided to you by SoftBank'),
+    '#default_value' => $settings['service_id'],
+    '#required' => TRUE,
+  );
+
+  $form['hash_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Hash Key'),
+    '#description' => t('The hash key provided to you by SoftBank'),
+    '#default_value' => $settings['hash_key'],
+    '#required' => TRUE,
+  );
+
+  // TODO: Make this an editable field if required in future.
+  $form['pay_type'] = array(
+    '#type' => 'value',
+    '#default_value' => $settings['pay_type'],
+  );
+
+  // TODO: Make this an editable field if required in future.
+  $form['auto_charge_type'] = array(
+    '#type' => 'value',
+    '#default_value' => $settings['auto_charge_type'],
+  );
+
+  // TODO: Make this an editable field if required in future.
+  $form['service_type'] = array(
+    '#type' => 'value',
+    '#default_value' => $settings['service_type'],
+  );
+
+  return $form;
 }
 
 /**

@@ -2,13 +2,15 @@
 
 /**
  * @file
- * Contains SBPaymentProductInterface.
+ * Contains \Commerce\SBPayment\Product\ProductInterface.
  */
+
+namespace Commerce\SBPayment\Product;
 
 /**
  * Interface that all SoftBank product classes need to implement.
  */
-interface SBPaymentProductInterface {
+interface ProductInterface {
 
   /**
    * Get the list of fields mandatory for a product.
