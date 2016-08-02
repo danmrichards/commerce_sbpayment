@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * Install/uninstall logic for Commerce SoftBank Payment Service.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function commerce_sbpayment_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    // Add a requirement that the default currency is set to Japanese Yen.
+    $requirements['commerce_sbpayment_default_currency'] = array(
+      'title' => t('Commerce SoftBank Payment Service - Currency settings'),
+    );
+
+    // Determine the status of the requirement.
+    if (commerce_default_currency() != 'JPY') {
+      // Default service is not working.
+      $requirements['commerce_sbpayment_default_currency']['value'] = t('Invalid');
+      $requirements['commerce_sbpayment_default_currency']['severity'] = REQUIREMENT_ERROR;
+      $requirements['commerce_sbpayment_default_currency']['description'] = t('The current default currency @currency_code is not supported. The SoftBank Payment Service only supports Japanese Yen.', array('@currency_code' => commerce_default_currency()));
+    }
+    else {
+      $requirements['commerce_sbpayment_default_currency']['value'] = t('OK');
+      $requirements['commerce_sbpayment_default_currency']['severity'] = REQUIREMENT_OK;
+    }
+  }
+
+  return $requirements;
+}

@@ -5,6 +5,8 @@
  * Implements the SoftBank Payment Service for use with Drupal Commerce.
  */
 
+// TODO: Implement hook_requirements to error if the default currency isnt JPY.
+
 // TODO: Add unit tests to validate API functionality.
 
 define('COMMERCE_SBPAYMENT_BASE_URL', 'commerce/sbpayment');
@@ -33,7 +35,7 @@ function commerce_sbpayment_commerce_payment_method_info() {
     'file' => 'includes/commerce_sbpayment.payment.inc',
     'title' => t('Commerce SoftBank Payment Service'),
     'description' => t('Redirect users to submit payments through the SoftBank Payment Service.'),
-    'active' => TRUE,
+    'active' => (commerce_default_currency() === 'JPY'),
     'terminal' => FALSE,
     'offsite' => TRUE,
     'offsite_autoredirect' => TRUE,
