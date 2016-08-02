@@ -8,7 +8,7 @@
 /**
  * Class to model a product for use on a SoftBank payment service request.
  */
-class SBPaymentProduct {
+class SBPaymentProduct implements SBPaymentProductInterface {
 
   /**
    * The row number the product is displayed in on the payment screen.
@@ -82,10 +82,7 @@ class SBPaymentProduct {
   protected $dtlFree3;
 
   /**
-   * Get the list of fields mandatory for a product.
-   *
-   * @return string[]
-   *   Array of field names matching properties of this class.
+   * {@inheritdoc}
    */
   public static function getMandatoryFields() {
     return array(
