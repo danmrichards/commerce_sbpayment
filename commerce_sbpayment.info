@@ -3,8 +3,6 @@ description = Implements the SoftBank Payment Service for use with Drupal Commer
 package = Commerce (SoftBank)
 core = 7.x
 
-configure = admin/commerce/config/payment-methods/manage/commerce_payment_commerce_sbpayment
-
 autoload[sbpayment][] = Commerce\SBPayment
 
 dependencies[] = autoload

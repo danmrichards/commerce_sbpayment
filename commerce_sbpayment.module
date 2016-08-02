@@ -10,7 +10,7 @@
 // TODO: Add unit tests to validate API functionality.
 
 define('COMMERCE_SBPAYMENT_BASE_URL', 'commerce/sbpayment');
-define('COMMERCE_SBPAYMENT_PAYMENT_METHOD', 'commerce_sbpayment');
+define('COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE', 'commerce_sbpayment');
 
 /**
  * Implements hook_help().
@@ -31,15 +31,24 @@ function commerce_sbpayment_help($path, $arg) {
 function commerce_sbpayment_commerce_payment_method_info() {
   $payment_methods = array();
 
-  $payment_methods[COMMERCE_SBPAYMENT_PAYMENT_METHOD] = array(
-    'file' => 'includes/commerce_sbpayment.payment.inc',
-    'title' => t('Commerce SoftBank Payment Service'),
-    'description' => t('Redirect users to submit payments through the SoftBank Payment Service.'),
-    'active' => (commerce_default_currency() === 'JPY'),
-    'terminal' => FALSE,
-    'offsite' => TRUE,
-    'offsite_autoredirect' => TRUE,
-  );
+  // Add a new payment method for each available SoftBank payment service.
+  foreach (commerce_sbpayment_services() as $machine_name => $sbpayment_service) {
+    // Build the commerce payment method machine name.
+    $sbpayment_service_method_name = sprintf('%s_%s', COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE, $machine_name);
+
+    // Determine the service name.
+    $sbpayment_service_name = !empty($sbpayment_service['name']) ? $sbpayment_service['name'] : $machine_name;
+
+    $payment_methods[$sbpayment_service_method_name] = array(
+      'file' => 'includes/' . $sbpayment_service_method_name . '.payment.inc',
+      'title' => t('Commerce SoftBank Payment Service: @service_name', array('@service_name' => $sbpayment_service_name)),
+      'description' => t('Redirect users to submit payments through the SoftBank Payment Service: @service_name.', array('@service_name' => $sbpayment_service_name)),
+      'active' => (commerce_default_currency() === 'JPY'),
+      'terminal' => FALSE,
+      'offsite' => TRUE,
+      'offsite_autoredirect' => TRUE,
+    );
+  }
 
   return $payment_methods;
 }
@@ -49,21 +58,18 @@ function commerce_sbpayment_commerce_payment_method_info() {
 // TODO: Implement custom delivery callback for CGI notification.
 
 /**
- * Get an array of default settings for the SoftBank Payment Service.
+ * Get the list of available SoftBank services.
  *
  * @return array
- *   Array of default values keyed by field name.
+ *   Array of SoftBank services keyed by a unique machine name.
  */
-function commerce_sbpayment_default_settings() {
+function commerce_sbpayment_services() {
+  // TODO: The XML API can be implemented here if required in future.
   return array(
-    'mode' => \Commerce\SBPayment\SBPayment::API_MODE_TEST,
-    'pay_methods' => array(),
-    'merchant_id' => '',
-    'service_id' => '',
-    'pay_type' => 0,
-    'auto_charge_type' => 0,
-    'service_type' => 0,
-    'hash_key' => '',
+    'link_type' => array(
+      'name' => t('Link Type'),
+      'class' => \Commerce\SBPayment\Service\LinkType::class,
+    ),
   );
 }
 

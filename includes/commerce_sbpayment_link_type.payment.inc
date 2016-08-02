@@ -11,11 +11,11 @@
  * @see commerce_sbpayment_commerce_payment_method_info()
  * @see commerce_checkout_pane_settings_form
  */
-function commerce_sbpayment_settings_form($settings = array()) {
+function commerce_sbpayment_link_type_settings_form($settings = array()) {
   $form = array();
 
   // Merge default settings into the stored settings array.
-  $settings = (array) $settings + commerce_sbpayment_default_settings();
+  $settings = (array) $settings + commerce_sbpayment_link_type_default_settings();
 
   $form['mode'] = array(
     '#type' => 'select',
@@ -87,13 +87,19 @@ function commerce_sbpayment_settings_form($settings = array()) {
  *
  * @see commerce_payment_pane_checkout_form()
  */
-function commerce_sbpayment_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+function commerce_sbpayment_link_type_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  // Ensure that the payment method has been correctly configured.
+  if (!commerce_sbpayment_link_type_validate_settings($payment_method['settings'])) {
+    drupal_set_message(t('SoftBank Payment Service: Link Type has not been configured correctly.'), 'error');
+    return array();
+  }
+
   $form = array();
 
   // Add the SoftBank payment methods selector.
   $form['softbank_pay_method'] = array(
     '#type' => 'radios',
-    '#title' => t('SoftBank Payment Service Method'),
+    '#title' => t('Payment Method'),
     '#description' => t('Choose the payment method you want to pay with using SoftBank'),
     '#options' => _commerce_sbpayment_payment_method_options($payment_method['settings']['pay_methods']),
     '#required' => TRUE,
@@ -107,7 +113,7 @@ function commerce_sbpayment_submit_form($payment_method, $pane_values, $checkout
  *
  * @see commerce_payment_pane_checkout_form_validate()
  */
-function commerce_sbpayment_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
+function commerce_sbpayment_link_type_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // Check the selected payment method value is present and valid.
   if (empty($pane_values['softbank_pay_method']) || !in_array($pane_values['softbank_pay_method'], $payment_method['settings']['pay_methods'])) {
     return FALSE;
@@ -119,7 +125,7 @@ function commerce_sbpayment_submit_form_validate($payment_method, $pane_form, $p
  *
  * @see commerce_payment_pane_checkout_form_submit()
  */
-function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+function commerce_sbpayment_link_type_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // Set the selected SoftBank payment method on the order.
   $order->data['softbank_pay_method'] = $pane_values['softbank_pay_method'];
 }
@@ -129,7 +135,7 @@ function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pan
  *
  * @see commerce_payment_redirect_pane_checkout_form()
  */
-function commerce_sbpayment_redirect_form($form, &$form_state, $order, $payment_method) {
+function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order, $payment_method) {
   // TODO: Implement redirect form.
   print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
@@ -141,9 +147,48 @@ function commerce_sbpayment_redirect_form($form, &$form_state, $order, $payment_
  *
  * @see commerce_payment_redirect_pane_checkout_form()
  */
-function commerce_sbpayment_redirect_form_validate($order, $payment_method) {
+function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_method) {
   // TODO: Implement redirect form validation.
   print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
+}
+
+/**
+ * Get an array of default settings for the SoftBank Payment Service: Link Type.
+ *
+ * @return array
+ *   Array of default values keyed by field name.
+ */
+function commerce_sbpayment_link_type_default_settings() {
+  return array(
+    'mode' => \Commerce\SBPayment\SBPayment::API_MODE_TEST,
+    'pay_methods' => array(),
+    'merchant_id' => '',
+    'service_id' => '',
+    'pay_type' => 0,
+    'auto_charge_type' => 0,
+    'service_type' => 0,
+    'hash_key' => '',
+  );
+}
+
+/**
+ * Validate the settings for the SoftBank Payment Service: Link Type.
+ *
+ * @param array $settings
+ *   Array of settings from an active payment method instance.
+ *
+ * @return bool
+ *   Are the current settings valid?
+ */
+function commerce_sbpayment_link_type_validate_settings($settings) {
+  foreach (commerce_sbpayment_link_type_default_settings() as $settings_field => $default_value) {
+    // Check that all non-zero values are present and correct.
+    if ($default_value !== 0 && empty($settings[$settings_field])) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
 }
