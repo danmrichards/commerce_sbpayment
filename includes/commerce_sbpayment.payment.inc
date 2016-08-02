@@ -21,7 +21,7 @@ function commerce_sbpayment_settings_form($settings = array()) {
     '#type' => 'select',
     '#title' => t('Gateway mode'),
     '#description' => t('The mode in which to use the SoftBank Payment Service.'),
-    '#options' => commerce_sbpayment_mode_options(),
+    '#options' => _commerce_sbpayment_mode_options(),
     '#default_value' => $settings['mode'],
     '#required' => TRUE,
   );
@@ -88,10 +88,18 @@ function commerce_sbpayment_settings_form($settings = array()) {
  * @see commerce_payment_pane_checkout_form()
  */
 function commerce_sbpayment_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
-  // TODO: Implement submit form.
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
+  $form = array();
+
+  // Add the SoftBank payment methods selector.
+  $form['softbank_pay_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('SoftBank Payment Service Method'),
+    '#description' => t('Choose the payment method you want to pay with using SoftBank'),
+    '#options' => _commerce_sbpayment_payment_method_options($payment_method['settings']['pay_methods']),
+    '#required' => TRUE,
+  );
+
+  return $form;
 }
 
 /**
@@ -100,10 +108,10 @@ function commerce_sbpayment_submit_form($payment_method, $pane_values, $checkout
  * @see commerce_payment_pane_checkout_form_validate()
  */
 function commerce_sbpayment_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
-  // TODO: Implement submit form validation.
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
+  // Check the selected payment method value is present and valid.
+  if (empty($pane_values['softbank_pay_method']) || !in_array($pane_values['softbank_pay_method'], $payment_method['settings']['pay_methods'])) {
+    return FALSE;
+  }
 }
 
 /**
@@ -111,11 +119,9 @@ function commerce_sbpayment_submit_form_validate($payment_method, $pane_form, $p
  *
  * @see commerce_payment_pane_checkout_form_submit()
  */
-function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pane_values, $order) {
-  // TODO: Implement submit form submit handler.
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
+function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  // Set the selected SoftBank payment method on the order.
+  $order->data['softbank_pay_method'] = $pane_values['softbank_pay_method'];
 }
 
 /**
@@ -123,7 +129,7 @@ function commerce_sbpayment_submit_form_submit($payment_method, $pane_form, $pan
  *
  * @see commerce_payment_redirect_pane_checkout_form()
  */
-function commerce_sbpayment_form_redirect_form($form, &$form_state, $order, $payment_method) {
+function commerce_sbpayment_redirect_form($form, &$form_state, $order, $payment_method) {
   // TODO: Implement redirect form.
   print __FUNCTION__ . "\r\n";
   print_r(func_get_args());

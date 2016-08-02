@@ -45,14 +45,14 @@ class LinkTypeProduct implements ProductInterface {
   protected $dtlItemCount = 1;
 
   /**
-   * Amount of tax on the detail subtotal.
+   * Amount (in JPY) of tax on the detail subtotal.
    *
    * @var float
    */
   protected $dtlTax;
 
   /**
-   * Product price (including tax).
+   * Product price (including tax) in JPY.
    *
    * @var float
    */
@@ -197,7 +197,7 @@ class LinkTypeProduct implements ProductInterface {
   }
 
   /**
-   * Get the item tax amount.
+   * Get the item tax amount in JPY.
    *
    * @return float
    *   The tax amount.
@@ -207,10 +207,10 @@ class LinkTypeProduct implements ProductInterface {
   }
 
   /**
-   * Set the item tax amount.
+   * Set the item tax amount in JPY.
    *
    * @param string $dtl_tax
-   *   The specified item tax amount.
+   *   The specified item tax amount in JPY.
    *
    * @return self
    *   This instantiated SBPaymentProduct object.
@@ -222,20 +222,20 @@ class LinkTypeProduct implements ProductInterface {
   }
 
   /**
-   * Get the product price (including tax).
+   * Get the product price (including tax) in JPY.
    *
    * @return float
-   *   The product price.
+   *   The product price in JPY.
    */
   public function getDtlAmount() {
     return $this->dtlAmount;
   }
 
   /**
-   * Set the product price (including tax).
+   * Set the product price (including tax) in JPY.
    *
    * @param string $dtl_amount
-   *   The specified item tax amount.
+   *   The specified item tax amount in JPY.
    *
    * @return self
    *   This instantiated SBPaymentProduct object.

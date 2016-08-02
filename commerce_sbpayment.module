@@ -68,16 +68,39 @@ function commerce_sbpayment_default_settings() {
 }
 
 /**
- * Get the available gateway modes.
+ * Get the available gateway mode options for use with the Drupal form API.
  *
  * @return string[]
  *   Array of gateway modes keyed by machine name.
  */
-function commerce_sbpayment_mode_options() {
+function _commerce_sbpayment_mode_options() {
   return array(
     \Commerce\SBPayment\SBPayment::API_MODE_TEST => t('Test'),
     \Commerce\SBPayment\SBPayment::API_MODE_LIVE => t('Live'),
   );
+}
+
+/**
+ * Get a list of SoftBank payment methods for use with the Drupal form API.
+ *
+ * @param string[] $payment_methods
+ *   List of the available payment method machine names as defined
+ *   by Commerce\SBPayment\Payment\Methods.
+ *
+ * @return string[]
+ *   Array of payment method names keyed by machine name.
+ */
+function _commerce_sbpayment_payment_method_options($payment_methods) {
+  // Build an array of payment method names keyed by the machine name. Filtering
+  // out any invalid methods.
+  $payment_method_options = array_filter(array_map(function ($payment_method) {
+    return \Commerce\SBPayment\Payment\Methods::getPaymentMethodByMachineName($payment_method);
+  }, $payment_methods));
+
+  // Allow other modules to alter the list of payment methods.
+  drupal_alter('commerce_sbpayment_payment_method_options', $payment_method_options);
+
+  return $payment_method_options;
 }
 
 // TODO: Add helper for saving transactions.
