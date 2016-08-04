@@ -17,11 +17,34 @@ use Commerce\SBPayment\Response\LinkTypeCgi;
 class LinkType extends SBPayment {
 
   /**
+   * Date stamp for this payment creation.
+   *
+   * Format: Ymdhis.
+   *
+   * @var string
+   */
+  private $requestDate;
+
+  /**
+   * Expiration time of this payment request.
+   *
+   * @var string
+   */
+  private $limitSecond = '';
+
+  /**
    * The API endpoint for the 'Link Type' service.
    *
    * @var string
    */
   protected $endpoint = 'f01/FepBuyInfoReceive.do';
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __toString() {
+    return 'link_type';
+  }
 
   /**
    * {@inheritdoc}
@@ -70,9 +93,23 @@ class LinkType extends SBPayment {
       'free2' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'free3' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'free_csv' => SBPayment::PAYMENT_FIELD_OPTIONAL,
-      'request_date' => SBPayment::PAYMENT_FIELD_MANDATORY,
-      'limit_second' => SBPayment::PAYMENT_FIELD_OPTIONAL,
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPaymentData() {
+    $payment_data = $this->paymentData;
+    $this->requestDate = date('Ymdhis');
+
+    // Add the request data and limit_second fields manually. This is to allow
+    // easier form and checksum generation.
+    // TODO: Look at making limit_second field configurable.
+    $payment_data['request_date'] = $this->requestDate;
+    $payment_data['limit_second'] = $this->limitSecond;
+
+    return $payment_data;
   }
 
   /**
@@ -88,6 +125,15 @@ class LinkType extends SBPayment {
     $checksum_fields = array_reduce($this->paymentData, function ($carry, $item) {
       return $carry . mb_convert_encoding($item, 'UTF-8', 'SJIS');
     });
+
+    // Append the data for each product.
+    foreach ($this->products as $product) {
+      $checksum_fields = mb_convert_encoding($checksum_fields . (string) $product, 'UTF-8', 'SJIS');
+    }
+
+    // Append the request data and limit second values.
+    $checksum_fields = mb_convert_encoding($checksum_fields . $this->requestDate, 'UTF-8', 'SJIS');
+    $checksum_fields = mb_convert_encoding($checksum_fields . $this->limitSecond, 'UTF-8', 'SJIS');
 
     // Append the hashkey.
     $checksum_fields = mb_convert_encoding($checksum_fields . $this->hashKey, 'UTF-8', 'SJIS');

@@ -36,4 +36,17 @@ interface ProductInterface {
    */
   public function toArray();
 
+  /**
+   * Returns a string representation of this SoftBank product.
+   *
+   * Intended for use with checksum generation.
+   *
+   * @return string
+   *   String representation of this SoftBank product. A concatenation of all
+   *   product data fields.
+   *
+   * @see getChecksum()
+   */
+  public function __toString();
+
 }

@@ -52,6 +52,13 @@ class LinkTypeProduct implements ProductInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function __toString() {
+    return implode($this->data);
+  }
+
+  /**
    * Get the row number value.
    *
    * @return int

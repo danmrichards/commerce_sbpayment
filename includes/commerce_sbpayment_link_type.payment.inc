@@ -192,14 +192,13 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'cancel_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'error_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $payment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-      'request_date' => date('Ymdhis'),
     );
 
     // Build an array of SoftBank product objects for the current order.
     $sbpayment_products = array();
 
     // Loop through the order contents.
-    $i = 0;
+    $i = 1;
     foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
       // We only want to check products.
       if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
@@ -228,22 +227,8 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     $payment_service->setPaymentData($payment_data);
     $payment_service->setProducts($sbpayment_products);
 
-    print __FUNCTION__ . "\r\n";
-    print __FUNCTION__ . "\r\n";
-    die(print_r($payment_service));
-
-    // $form = array();
-    //
-    // // Add the checksum value.
-    // $form['sps_hashcode'] = array(
-    //   '#type' => 'value',
-    //   '#value' => $payment_service->getChecksum(),
-    // );
-    //
-    // $form['#action'] = $payment_service->getServiceUrl();
-
     // Generate the redirect form for this order and service.
-    return commerce_sbpayment_service_order_form($order, $payment_service);
+    return commerce_sbpayment_service_order_form($payment_service, $order);
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);
@@ -302,4 +287,98 @@ function commerce_sbpayment_link_type_validate_settings($settings) {
   }
 
   return TRUE;
+}
+
+/**
+ * Generate a payment redirect form for a SoftBank payment service.
+ *
+ * @param \Commerce\SBPayment\SBPayment $payment_service
+ *   The payment service object with payment data set.
+ * @param object $order
+ *   A fully loaded commerce order object.
+ *
+ * @return array
+ *   A renderable Drupal form array.
+ */
+function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $payment_service, $order) {
+  $form = array();
+
+  // Set the SoftBank service URL.
+  $form['#action'] = $payment_service->getServiceUrl();
+
+  // Get the payment data from the service.
+  $payment_data = $payment_service->getPaymentData();
+
+  // Allow other modules to alter the payment data.
+  $order_data = clone $order;
+  $payment_service_name = (string) $payment_service;
+  drupal_alter('commerce_sbpayment_service_order_form_data', $payment_data, $payment_service_name, $order_data);
+
+  // Set the payment data fields.
+  foreach ($payment_data as $name => $value) {
+    $form[$name] = array('#type' => 'hidden', '#value' => $value);
+  }
+
+  // Set the product fields.
+  $i = 1;
+  foreach ($payment_service->getProducts() as $product) {
+    foreach ($product->toArray() as $product_field => $product_data) {
+      $form[$product_field . '__' . $i] = array(
+        '#type' => 'hidden',
+        '#value' => $product_data,
+        '#pre_render' => array('commerce_sbpayment_service_product_pre_render'),
+      );
+    }
+    ++$i;
+  }
+
+  // Add the checksum value.
+  $form['sps_hashcode'] = array(
+    '#type' => 'hidden',
+    '#value' => $payment_service->getChecksum(),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed to SoftBank'),
+  );
+
+  $form['#pre_render'][] = 'commerce_sbpayment_service_order_form_pre_render';
+
+  return $form;
+}
+
+/**
+ * Form element pre render callback.
+ *
+ * Tweak the name attribute of SoftBank product fields.
+ *
+ * @param array $element
+ *   Product form field element.
+ *
+ * @return array
+ *   Tweakedd product form field element.
+ */
+function commerce_sbpayment_service_product_pre_render($element) {
+  // Remove the index from the element name. Workaround for limitation of how
+  // Drupal form arrays are built (no duplicate field names).
+  $element_name = explode('__', $element['#name']);
+  $element['#name'] = $element_name[0];
+
+  return $element;
+}
+
+/**
+ * Form pre-render callback.
+ *
+ * Remove Drupal fields from a form (such as "form_token", "form_id" etc).
+ * This needs to be done since SoftBank will generate a signature from submitted
+ * data and will expect only those fields which described in API. Any other
+ * data will lead to wrong signature of payment request.
+ */
+function commerce_sbpayment_service_order_form_pre_render($form) {
+  unset($form['form_build_id']);
+  unset($form['form_id']);
+
+  return $form;
 }

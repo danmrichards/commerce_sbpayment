@@ -59,7 +59,7 @@ abstract class SBPayment {
   /**
    * Data required to create a payment keyed by field name.
    *
-   * @var string[]
+   * @var array
    */
   protected $paymentData = array();
 
@@ -157,6 +157,14 @@ abstract class SBPayment {
   }
 
   /**
+   * Get the data required to create a payment.
+   *
+   * @return array
+   *   Associative array of payment data.
+   */
+  public abstract function getPaymentData();
+
+  /**
    * Set the data required to create a payment.
    *
    * Each field returned from getPaymentFields() must be populated.
@@ -211,6 +219,14 @@ abstract class SBPayment {
     // Everything seems to be alright so set the products.
     $this->products = $products;
   }
+
+  /**
+   * Returns the type of this SoftBank payment service.
+   *
+   * @return string
+   *   Machine name of this SoftBank payment service.
+   */
+  public abstract function __toString();
 
   /**
    * Get the service URL for the current API mode.

@@ -97,7 +97,7 @@ function commerce_sbpayment_deliver($response) {
 function commerce_sbpayment_services() {
   // TODO: The XML API can be implemented here if required in future.
   return array(
-    'link_type' => array(
+    (string) new \Commerce\SBPayment\Service\LinkType() => array(
       'name' => t('Link Type'),
       'class' => \Commerce\SBPayment\Service\LinkType::class,
     ),
