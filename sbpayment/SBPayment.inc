@@ -17,30 +17,37 @@ abstract class SBPayment {
   /**
    * Test API mode flag.
    *
-   * @string
+   * @var string
    */
   const API_MODE_TEST = 'test';
 
   /**
    * Live API mode flag.
    *
-   * @string
+   * @var string
    */
   const API_MODE_LIVE = 'live';
 
   /**
    * Payment field mandatory flag.
    *
-   * @string
+   * @var string
    */
   const PAYMENT_FIELD_MANDATORY = 'mandatory';
 
   /**
    * Payment field optional flag.
    *
-   * @string
+   * @var string
    */
   const PAYMENT_FIELD_OPTIONAL = 'optional';
+
+  /**
+   * Dummy customer code to use in the event of guest checkouts.
+   *
+   * @var string
+   */
+  const DUMMY_CUST_CODE = 'reg_sps000';
 
   /**
    * What mode should the API be used in?

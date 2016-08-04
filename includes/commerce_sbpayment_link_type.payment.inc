@@ -174,10 +174,13 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'pay_method' => $order->data['softbank_pay_method'],
       'merchant_id' => $payment_method['settings']['merchant_id'],
       'service_id' => $payment_method['settings']['service_id'],
-      'cust_code' => $order->uid,
+      'cust_code' => $order->uid == 0 ? $payment_service::DUMMY_CUST_CODE : $order->uid,
       'order_id' => $order->order_number,
       'item_id' => $order->order_id,
-      'item_name' => $order->order_number,
+      'item_name' => t('Order @order_number from @site_name', array(
+        '@order_number' => $order->order_number,
+        '@site_name' => variable_get('site_name', 'Drupal'),
+      )),
       // TODO: Get the tax component of the order total. Maybe only needed for
       // bank transfers?
       'tax' => '',
