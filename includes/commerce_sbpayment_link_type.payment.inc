@@ -134,6 +134,8 @@ function commerce_sbpayment_link_type_submit_form_submit($payment_method, $pane_
  * Payment method callback: redirect form.
  *
  * @see commerce_payment_redirect_pane_checkout_form()
+ *
+ * @throws \Commerce\SBPayment\SBPaymentException
  */
 function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order, $payment_method) {
   // Ensure that the payment method has been correctly configured.
@@ -155,14 +157,20 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     // Load the order wrapper.
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-    // TODO: Ensure the order total is in JPY.
+    // Get the order total.
+    $order_total = $order_wrapper->commerce_order_total->value();
+
+    // Ensure the order total is in JPY.
+    if ($order_total['currency_code'] != 'JPY') {
+      throw new \Commerce\SBPayment\SBPaymentException(t('Invalid order currency detected. Expected: JPY, Got: @currency_code', array('@currency_code' => $order_total['currency_code'])));
+    }
 
     // Set the gateway mode and encryption hash key.
     $payment_service->setMode($payment_method['settings']['mode']);
     $payment_service->setHashKey($payment_method['settings']['hash_key']);
 
-    // Prepare the fields required by the payment service.
-    $payment_fields = array(
+    // Prepare the data required by the payment service.
+    $payment_data = array(
       'pay_method' => $order->data['softbank_pay_method'],
       'merchant_id' => $payment_method['settings']['merchant_id'],
       'service_id' => $payment_method['settings']['service_id'],
@@ -170,9 +178,9 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'order_id' => $order->order_number,
       'item_id' => $order->order_id,
       'item_name' => $order->order_number,
-      // TODO: Get the tax component of the order total.
-      // @see commerce_vat_total_amount()
-      'tax' => \Commerce\SBPayment\SBPayment::PAYMENT_FIELD_OPTIONAL,
+      // TODO: Get the tax component of the order total. Maybe only needed for
+      // bank transfers?
+      'tax' => '',
       'amount' => $order_wrapper->commerce_order_total->amount->value(),
       // TODO: Research into this field and make configurable if required.
       'pay_type' => 0,
@@ -187,22 +195,55 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'request_date' => date('Ymdhis'),
     );
 
-    print_r($payment_fields);
-    die;
-
     // Build an array of SoftBank product objects for the current order.
+    $sbpayment_products = array();
 
-    $form = array();
+    // Loop through the order contents.
+    $i = 0;
+    foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+      // We only want to check products.
+      if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+        // Ensure the product is valid.
+        if (isset($line_item_wrapper->commerce_product) && !is_null($line_item_wrapper->commerce_product->value())) {
+          // Load the product.
+          $product = commerce_product_load($line_item_wrapper->commerce_product->product_id->value());
 
-    // Add the checksum value.
-    $form['sps_hashcode'] = array(
-      '#type' => 'value',
-      '#value' => $payment_service->getChecksum(),
-    );
+          // Prepare the product data.
+          // TODO: Add the tax component of the product price. Maybe only needed
+          // for bank transfers?
+          $sbpayment_products[] = new \Commerce\SBPayment\Product\LinkTypeProduct(array(
+            'dtl_rowno' => $i,
+            'dtl_item_id' => $product->sku,
+            'dtl_item_name' => $product->title,
+            'dtl_item_count' => (int) $line_item_wrapper->quantity->value(),
+            'dtl_item_amount' => $line_item_wrapper->commerce_unit_price->amount->value(),
+          ));
 
-    $form['#action'] = $payment_service->getServiceUrl();
+          ++$i;
+        }
+      }
+    }
 
-    return $form;
+    // Set the payment fields and product on the service.
+    $payment_service->setPaymentData($payment_data);
+    $payment_service->setProducts($sbpayment_products);
+
+    print __FUNCTION__ . "\r\n";
+    print __FUNCTION__ . "\r\n";
+    die(print_r($payment_service));
+
+    // $form = array();
+    //
+    // // Add the checksum value.
+    // $form['sps_hashcode'] = array(
+    //   '#type' => 'value',
+    //   '#value' => $payment_service->getChecksum(),
+    // );
+    //
+    // $form['#action'] = $payment_service->getServiceUrl();
+
+    // Generate the redirect form for this order and service.
+    return commerce_sbpayment_service_order_form($order, $payment_service);
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);

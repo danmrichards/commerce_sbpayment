@@ -172,14 +172,15 @@ abstract class SBPayment {
 
     // Check all of the payment fields are present and the mandatory fields
     // have been populated.
-    array_walk($this->getPaymentFields(), function ($mandatory, $field_name) use ($payment_data) {
+    $payment_fields = $this->getPaymentFields();
+    array_walk($payment_fields, function ($mandatory, $field_name) use (&$payment_data) {
       // Ensure the field has been populated if it is mandatory.
-      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && empty($payment_data[$field_name])) {
+      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && !isset($payment_data[$field_name])) {
         throw new SBPaymentException(sprintf('Mandatory payment field %s is not populated.', $field_name));
       }
       elseif (!isset($payment_data[$field_name])) {
-        // Otherwise just ensure the field is present.
-        throw new SBPaymentException(sprintf('Payment field %s is missing.', $field_name));
+        // Otherwise just set a blank default value for optional fields.
+        $payment_data[$field_name] = '';
       }
     });
 
@@ -277,9 +278,9 @@ abstract class SBPayment {
    */
   protected function validateProduct(ProductInterface $product) {
     // Check that each of the mandatory product fields are populated.
-    foreach (ProductInterface::getMandatoryFields() as $mandatory_field) {
-      if (empty($product->{$mandatory_field})) {
-        throw new SBPaymentException(sprintf('Mandatory product field %s is not populated', $field_name));
+    foreach ($product::getMandatoryFields() as $mandatory_field) {
+      if (!isset($product->toArray()[$mandatory_field])) {
+        throw new SBPaymentException(sprintf('Mandatory product field %s is not populated', $mandatory_field));
       }
     }
   }

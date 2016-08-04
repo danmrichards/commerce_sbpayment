@@ -7,7 +7,7 @@
 
 namespace Commerce\SBPayment\Product;
 
-use Commerce\SBPayment\ProductInterface;
+use Commerce\SBPayment\Product\ProductInterface;
 
 /**
  * Class to model a product for use on a SoftBank payment service request.
@@ -15,85 +15,40 @@ use Commerce\SBPayment\ProductInterface;
 class LinkTypeProduct implements ProductInterface {
 
   /**
-   * The row number the product is displayed in on the payment screen.
-   *
-   * Basically an ordering field. Products are assumed to be sent in a list.
-   *
-   * @var int
+   * Data required for a SoftBank product.
    */
-  protected $dtlRowNo = 1;
+  private $data = array(
+    'dtl_rowno' => 1,
+    'dtl_item_id' => '',
+    'dtl_item_name' => '',
+    'dtl_item_count' => 1,
+    'dtl_item_tax' => '',
+    'dtl_item_amount' => '',
+  );
 
   /**
-   * Item ID to be displayed on the payment screen.
-   *
-   * @var string
+   * {@inheritdoc}
    */
-  protected $dtlItemId;
-
-  /**
-   * Item name to be displayed on the payment screen.
-   *
-   * @var string
-   */
-  protected $dtlItemName;
-
-  /**
-   * Item quantity.
-   *
-   * @var int
-   */
-  protected $dtlItemCount = 1;
-
-  /**
-   * Amount (in JPY) of tax on the detail subtotal.
-   *
-   * @var float
-   */
-  protected $dtlTax;
-
-  /**
-   * Product price (including tax) in JPY.
-   *
-   * @var float
-   */
-  protected $dtlAmount;
-
-  /**
-   * Free text 1.
-   *
-   * Note: This field is not used by the SoftBank Payment Service.
-   *
-   * @var string
-   */
-  protected $dtlFree1;
-
-  /**
-   * Free text 2.
-   *
-   * Note: This field is not used by the SoftBank Payment Service.
-   *
-   * @var string
-   */
-  protected $dtlFree2;
-
-  /**
-   * Free text 3.
-   *
-   * Note: This field is not used by the SoftBank Payment Service.
-   *
-   * @var string
-   */
-  protected $dtlFree3;
+  public function __construct(array $product_data) {
+    $this->data = array_merge($this->data, $product_data);
+  }
 
   /**
    * {@inheritdoc}
    */
   public static function getMandatoryFields() {
     return array(
-      'dtlRowNo',
-      'dtlItemId',
-      'dtlItemName',
+      'dtl_rowno',
+      'dtl_item_id',
+      'dtl_item_name',
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toArray() {
+    return $this->data;
   }
 
   /**
