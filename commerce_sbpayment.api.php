@@ -29,13 +29,13 @@ function hook_commerce_sbpayment_payment_method_options_alter(&$payment_method_o
  *
  * @param array $payment_data
  *   Array of payment data from a \Commerce\SBPayment\SBPayment object.
- * @param string $payment_service_name
+ * @param string $sbpayment_service_name
  *   Machine name of the payment service.
  * @param object $order
  *   A fully loaded Drupal commerce order object.
  */
-function hook_commerce_sbpayment_service_order_form_data_alter(&$payment_data, $payment_service_name, $order) {
-  if ($payment_service_name == 'link_type') {
+function hook_commerce_sbpayment_service_order_form_data_alter(&$payment_data, $sbpayment_service_name, $order) {
+  if ($sbpayment_service_name == 'link_type') {
     $payment_data['sps_cust_no'] = 'CUST' . $order->uid;
   }
 }

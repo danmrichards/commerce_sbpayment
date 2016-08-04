@@ -35,6 +35,14 @@ interface ResponseInterface {
   public function __construct(array $data);
 
   /**
+   * Get the SoftBank payment result based on the current data.
+   *
+   * @return string
+   *   A payment result string based on the constants in this interface.
+   */
+  public function getResult();
+
+  /**
    * Get the response string.
    *
    * @return string

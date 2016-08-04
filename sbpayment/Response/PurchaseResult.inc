@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Commerce\SBPayment\Response\LinkTypeCgi.
+ * Contains \Commerce\SBPayment\Response\PurchaseResult.
  */
 
 namespace Commerce\SBPayment;
@@ -10,9 +10,9 @@ namespace Commerce\SBPayment;
 use Commerce\SBPayment\Response\ResponseInterface;
 
 /**
- * SoftBank response class for the 'Link Type' service CGI notification.
+ * SoftBank response class for the 'Link Type' service purchase result.
  */
-class LinkTypeCgi implements ResponseInterface {
+class PurchaseResult implements ResponseInterface {
 
   /**
    * {@inheritdoc}

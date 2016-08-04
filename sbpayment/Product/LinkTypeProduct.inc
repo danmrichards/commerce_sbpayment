@@ -8,7 +8,7 @@
 namespace Commerce\SBPayment\Product;
 
 /**
- * Class to model a product for use on a SoftBank payment service request.
+ * Class to model a product for use on the SoftBank payment 'Link Type' service.
  */
 class LinkTypeProduct implements ProductInterface {
 

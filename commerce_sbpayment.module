@@ -139,6 +139,20 @@ function commerce_sbpayment_get_service_object($machine_name) {
 }
 
 /**
+ * Creates/Updates a commerce payment transaction based on SoftBank data.
+ *
+ * @param string $sbpayment_service_name
+ *   A valid SoftBank payment service machine name.
+ * @param Commerce\SBPayment\Response\ResponseInterface $sbpayment_response
+ *   A SoftBank payment response object.
+ * @param object $order
+ *   A fully loaded commerce order object.
+ */
+function commerce_sbpayment_transaction($sbpayment_service_name, Commerce\SBPayment\Response\ResponseInterface $sbpayment_response, $order) {
+  die(print_r(func_get_args()));
+}
+
+/**
  * Get the available gateway mode options for use with the Drupal form API.
  *
  * @return string[]

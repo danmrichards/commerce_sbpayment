@@ -145,13 +145,13 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
   }
 
   // Get the payment service object.
-  $payment_service_machine_name = str_replace(COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE . '_', '', $payment_method['method_id']);
-  $payment_service = commerce_sbpayment_get_service_object($payment_service_machine_name);
+  $sbpayment_service_machine_name = str_replace(COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE . '_', '', $payment_method['method_id']);
+  $sbpayment_service = commerce_sbpayment_get_service_object($sbpayment_service_machine_name);
 
   try {
     // Check the payment service was correctly instantiated.
-    if ($payment_service === FALSE) {
-      throw new \Commerce\SBPayment\SBPaymentException(t('Service object could not be instantiated for machine name @machine_name', array('@machine_name' => $payment_service_machine_name)));
+    if ($sbpayment_service === FALSE) {
+      throw new \Commerce\SBPayment\SBPaymentException(t('Service object could not be instantiated for machine name @machine_name', array('@machine_name' => $sbpayment_service_machine_name)));
     }
 
     // Load the order wrapper.
@@ -166,15 +166,15 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     }
 
     // Set the gateway mode and encryption hash key.
-    $payment_service->setMode($payment_method['settings']['mode']);
-    $payment_service->setHashKey($payment_method['settings']['hash_key']);
+    $sbpayment_service->setMode($payment_method['settings']['mode']);
+    $sbpayment_service->setHashKey($payment_method['settings']['hash_key']);
 
     // Prepare the data required by the payment service.
     $payment_data = array(
       'pay_method' => $order->data['softbank_pay_method'],
       'merchant_id' => $payment_method['settings']['merchant_id'],
       'service_id' => $payment_method['settings']['service_id'],
-      'cust_code' => $order->uid == 0 ? $payment_service::DUMMY_CUST_CODE : $order->uid,
+      'cust_code' => $order->uid == 0 ? $sbpayment_service::DUMMY_CUST_CODE : $order->uid,
       'order_id' => $order->order_number,
       'item_id' => $order->order_id,
       'item_name' => t('Order @order_number from @site_name', array(
@@ -194,7 +194,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'success_url' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'cancel_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'error_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-      'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $payment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+      'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $sbpayment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
     );
 
     // Build an array of SoftBank product objects for the current order.
@@ -227,11 +227,11 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     }
 
     // Set the payment fields and product on the service.
-    $payment_service->setPaymentData($payment_data);
-    $payment_service->setProducts($sbpayment_products);
+    $sbpayment_service->setPaymentData($payment_data);
+    $sbpayment_service->setProducts($sbpayment_products);
 
     // Generate the redirect form for this order and service.
-    return commerce_sbpayment_service_order_form($payment_service, $order);
+    return commerce_sbpayment_service_order_form($sbpayment_service, $order);
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);
@@ -251,6 +251,34 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
   print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
+
+  // Get the service object.
+  $sbpayment_service = commerce_sbpayment_get_service_object($sbpayment_service_name);
+
+  // Create the repsonse handler.
+  $sbpayment_response_class = $sbpayment_service->getResponseHandler();
+
+  try {
+    // Attempt the create the response object.
+    $sbpayment_response = new $sbpayment_response_class($_POST);
+
+    // TODO: Handle each payment result accordingly.
+    switch ($sbpayment_response->getResultCode()) {
+
+    }
+
+    // Create the drupal transaction.
+    //commerce_sbpayment_transaction($sbpayment_service_name, $sbpayment_response, $order);
+  }
+  catch (\Commerce\SBPayment\SBPaymentException $e) {
+    watchdog_exception('commerce_sbpayment', $e);
+    drupal_set_message(t('A problem occurred when starting the SoftBank Payment Service. Please contact an administrator.'), 'error');
+    commerce_payment_redirect_pane_previous_page($order);
+
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /**
@@ -295,7 +323,7 @@ function commerce_sbpayment_link_type_validate_settings($settings) {
 /**
  * Generate a payment redirect form for a SoftBank payment service.
  *
- * @param \Commerce\SBPayment\SBPayment $payment_service
+ * @param \Commerce\SBPayment\SBPayment $sbpayment_service
  *   The payment service object with payment data set.
  * @param object $order
  *   A fully loaded commerce order object.
@@ -303,19 +331,19 @@ function commerce_sbpayment_link_type_validate_settings($settings) {
  * @return array
  *   A renderable Drupal form array.
  */
-function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $payment_service, $order) {
+function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sbpayment_service, $order) {
   $form = array();
 
   // Set the SoftBank service URL.
-  $form['#action'] = $payment_service->getServiceUrl();
+  $form['#action'] = $sbpayment_service->getServiceUrl();
 
   // Get the payment data from the service.
-  $payment_data = $payment_service->getPaymentData();
+  $payment_data = $sbpayment_service->getPaymentData();
 
   // Allow other modules to alter the payment data.
   $order_data = clone $order;
-  $payment_service_name = (string) $payment_service;
-  drupal_alter('commerce_sbpayment_service_order_form_data', $payment_data, $payment_service_name, $order_data);
+  $sbpayment_service_name = (string) $sbpayment_service;
+  drupal_alter('commerce_sbpayment_service_order_form_data', $payment_data, $sbpayment_service_name, $order_data);
 
   // Set the payment data fields.
   foreach ($payment_data as $name => $value) {
@@ -324,7 +352,7 @@ function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $pa
 
   // Set the product fields.
   $i = 1;
-  foreach ($payment_service->getProducts() as $product) {
+  foreach ($sbpayment_service->getProducts() as $product) {
     foreach ($product->toArray() as $product_field => $product_data) {
       $form[$product_field . '__' . $i] = array(
         '#type' => 'hidden',
@@ -338,7 +366,7 @@ function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $pa
   // Add the checksum value.
   $form['sps_hashcode'] = array(
     '#type' => 'hidden',
-    '#value' => $payment_service->getChecksum(),
+    '#value' => $sbpayment_service->getChecksum(),
   );
 
   $form['submit'] = array(

@@ -244,7 +244,7 @@ abstract class SBPayment {
   public abstract function getServiceUrl();
 
   /**
-   * Get the PHP class name of the repsonse handler for this service.
+   * Get the PHP class name of the notification handler for this service.
    *
    * The class must implement the Commerce\SBPayment\Response\ResponseInterface
    * interface.
@@ -252,7 +252,18 @@ abstract class SBPayment {
    * @return string
    *   PHP class name.
    */
-  public abstract function getResponseHandler();
+  public abstract function getNotificationHandler();
+
+  /**
+   * Get the PHP class name of the notification handler for this service.
+   *
+   * The class must implement the Commerce\SBPayment\Response\ResponseInterface
+   * interface.
+   *
+   * @return string
+   *   PHP class name.
+   */
+  public abstract function getResultHandler();
 
   /**
    * Get an associatvie array of the fields required to create a payment.
