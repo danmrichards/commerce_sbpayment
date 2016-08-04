@@ -215,7 +215,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
             'dtl_item_id' => $product->sku,
             'dtl_item_name' => $product->title,
             'dtl_item_count' => (int) $line_item_wrapper->quantity->value(),
-            'dtl_item_amount' => $line_item_wrapper->commerce_unit_price->amount->value(),
+            'dtl_amount' => $line_item_wrapper->commerce_unit_price->amount->value(),
           ));
 
           ++$i;

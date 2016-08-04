@@ -81,7 +81,7 @@ class LinkType extends SBPayment {
       'auto_charge_type' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'service_type' => SBPayment::PAYMENT_FIELD_MANDATORY,
       'div_settele' => SBPayment::PAYMENT_FIELD_OPTIONAL,
-      'last_charge_mont' => SBPayment::PAYMENT_FIELD_OPTIONAL,
+      'last_charge_month' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'camp_type' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'tracking_id' => SBPayment::PAYMENT_FIELD_OPTIONAL,
       'terminal_type' => SBPayment::PAYMENT_FIELD_OPTIONAL,

@@ -7,8 +7,6 @@
 
 namespace Commerce\SBPayment\Product;
 
-use Commerce\SBPayment\Product\ProductInterface;
-
 /**
  * Class to model a product for use on a SoftBank payment service request.
  */
@@ -22,8 +20,11 @@ class LinkTypeProduct implements ProductInterface {
     'dtl_item_id' => '',
     'dtl_item_name' => '',
     'dtl_item_count' => 1,
-    'dtl_item_tax' => '',
-    'dtl_item_amount' => '',
+    'dtl_tax' => '',
+    'dtl_amount' => '',
+    'dtl_free1' => '',
+    'dtl_free2' => '',
+    'dtl_free3' => '',
   );
 
   /**
@@ -55,7 +56,7 @@ class LinkTypeProduct implements ProductInterface {
    * {@inheritdoc}
    */
   public function __toString() {
-    return implode($this->data);
+    return implode('', $this->data);
   }
 
   /**
