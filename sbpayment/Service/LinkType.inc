@@ -42,6 +42,14 @@ class LinkType extends SBPayment {
   protected $endpoint = 'f01/FepBuyInfoReceive.do';
 
   /**
+   * Constructor.
+   */
+  public function __construct() {
+    // Set the request date to the current time in Japan.
+    $this->requestDate = Util::generateJapanTime('Ymdhis');
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function __toString() {
@@ -108,16 +116,6 @@ class LinkType extends SBPayment {
   /**
    * {@inheritdoc}
    */
-  public function getPaymentData() {
-    $payment_data = $this->paymentData;
-    $this->requestDate = Util::generateJapanTime('Ymdhis');
-
-    return $payment_data;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getChecksum() {
     // We can't continue without the hash key.
     if (empty($this->hashKey)) {
@@ -125,8 +123,7 @@ class LinkType extends SBPayment {
     }
 
     // Generate the initial checksum string with just the payment data.
-    $checksum_fields = $this->paymentData;
-    $checksum_string = implode('', $checksum_fields);
+    $checksum_string = implode('', $this->paymentData);
 
     // Append the data for each product.
     foreach ($this->products as $product) {

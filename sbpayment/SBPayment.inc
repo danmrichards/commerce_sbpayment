@@ -169,7 +169,9 @@ abstract class SBPayment {
    * @return array
    *   Associative array of payment data.
    */
-  public abstract function getPaymentData();
+  public function getPaymentData() {
+    return $this->paymentData;
+  }
 
   /**
    * Set the data required to create a payment.
@@ -196,7 +198,7 @@ abstract class SBPayment {
       }
 
       // Set the field or blank it out if not present.
-      $this->paymentData[$field_name] = !empty($payment_data[$field_name]) ? urlencode(trim($payment_data[$field_name])) : '';
+      $this->paymentData[$field_name] = !empty($payment_data[$field_name]) ? trim($payment_data[$field_name]) : '';
     });
   }
 

@@ -31,12 +31,8 @@ class LinkTypeProduct implements ProductInterface {
    * {@inheritdoc}
    */
   public function __construct(array $product_data) {
-    // Remove any spaces and URL encode the data.
-    foreach ($product_data as $field => $data) {
-      $product_data[$field] = urlencode(trim($data));
-    }
-
-    $this->data = array_merge($this->data, $product_data);
+    // Remove any spaces from the data.
+    $this->data = array_merge($this->data, array_map('trim', $product_data));
   }
 
   /**
