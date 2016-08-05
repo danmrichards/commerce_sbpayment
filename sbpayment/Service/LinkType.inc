@@ -112,12 +112,6 @@ class LinkType extends SBPayment {
     $payment_data = $this->paymentData;
     $this->requestDate = Util::generateJapanTime('Ymdhis');
 
-    // Add the request data and limit_second fields manually. This is to allow
-    // easier form and checksum generation.
-    // TODO: Look at making limit_second field configurable.
-    $payment_data['request_date'] = $this->requestDate;
-    $payment_data['limit_second'] = $this->limitSecond;
-
     return $payment_data;
   }
 
@@ -130,25 +124,44 @@ class LinkType extends SBPayment {
       throw new SBPaymentException('SoftBank hash key is missing');
     }
 
-    // Concatenate the fields and convert encoding.
-    $checksum_fields = array_reduce($this->paymentData, function ($carry, $item) {
-      return $carry . mb_convert_encoding($item, 'UTF-8', 'SJIS');
-    });
+    // Generate the initial checksum string with just the payment data.
+    $checksum_fields = $this->paymentData;
+    $checksum_string = implode('', $checksum_fields);
 
     // Append the data for each product.
     foreach ($this->products as $product) {
-      $checksum_fields = mb_convert_encoding($checksum_fields . (string) $product, 'UTF-8', 'SJIS');
+      $checksum_string .= (string) $product;
     }
 
-    // Append the request data and limit second values.
-    $checksum_fields = mb_convert_encoding($checksum_fields . $this->requestDate, 'UTF-8', 'SJIS');
-    $checksum_fields = mb_convert_encoding($checksum_fields . $this->limitSecond, 'UTF-8', 'SJIS');
+    // Append the final pieces of manually set data.
+    $checksum_string .= $this->requestDate;
+    $checksum_string .= $this->limitSecond;
+    $checksum_string .= $this->hashKey;
 
-    // Append the hashkey.
-    $checksum_fields = mb_convert_encoding($checksum_fields . $this->hashKey, 'UTF-8', 'SJIS');
+    $checksum_string = mb_convert_encoding($checksum_string, 'UTF-8', 'SJIS');
 
     // Calculate the hash.
-    return sha1($checksum_fields);
+    return sha1($checksum_string);
+  }
+
+  /**
+   * Get the request date value.
+   *
+   * @return string
+   *   Timestamp, in Japan time, for this request.
+   */
+  public function getRequestDate() {
+    return $this->requestDate;
+  }
+
+  /**
+   * Get the limit_second value.
+   *
+   * @return int
+   *   The time, in seconds, that this request is valid for.
+   */
+  public function getLimitSecond() {
+    return $this->limitSecond;
   }
 
 }

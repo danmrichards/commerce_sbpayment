@@ -363,6 +363,17 @@ function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sb
     ++$i;
   }
 
+  // Add the request data and limit fields. They have to appear after the
+  // product detail fields.
+  $form['request_date'] = array(
+    '#type' => 'hidden',
+    '#value' => $sbpayment_service->getRequestDate(),
+  );
+  $form['limit_second'] = array(
+    '#type' => 'hidden',
+    '#value' => $sbpayment_service->getLimitSecond(),
+  );
+
   // Add the checksum value.
   $form['sps_hashcode'] = array(
     '#type' => 'hidden',

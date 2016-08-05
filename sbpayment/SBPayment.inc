@@ -188,19 +188,16 @@ abstract class SBPayment {
     // Check all of the payment fields are present and the mandatory fields
     // have been populated.
     $payment_fields = $this->getPaymentFields();
+
     array_walk($payment_fields, function ($mandatory, $field_name) use (&$payment_data) {
       // Ensure the field has been populated if it is mandatory.
       if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && !isset($payment_data[$field_name])) {
         throw new SBPaymentException(sprintf('Mandatory payment field %s is not populated.', $field_name));
       }
-      elseif (!isset($payment_data[$field_name])) {
-        // Otherwise just set a blank default value for optional fields.
-        $payment_data[$field_name] = '';
-      }
-    });
 
-    // Everything seems to be alright so set the data.
-    $this->paymentData = $payment_data;
+      // Set the field or blank it out if not present.
+      $this->paymentData[$field_name] = !empty($payment_data[$field_name]) ? urlencode(trim($payment_data[$field_name])) : '';
+    });
   }
 
   /**
