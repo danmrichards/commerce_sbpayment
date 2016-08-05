@@ -9,6 +9,7 @@ namespace Commerce\SBPayment\Service;
 
 use Commerce\SBPayment\SBPayment;
 use Commerce\SBPayment\SBPaymentException;
+use Commerce\SBPayment\Util\Util;
 use Commerce\SBPayment\Response\LinkTypeCgi;
 use Commerce\SBPayment\Response\PurchaseResult;
 
@@ -109,7 +110,7 @@ class LinkType extends SBPayment {
    */
   public function getPaymentData() {
     $payment_data = $this->paymentData;
-    $this->requestDate = date('Ymdhis');
+    $this->requestDate = Util::generateJapanTime('Ymdhis');
 
     // Add the request data and limit_second fields manually. This is to allow
     // easier form and checksum generation.
