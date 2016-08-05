@@ -46,7 +46,7 @@ class LinkType extends SBPayment {
    */
   public function __construct() {
     // Set the request date to the current time in Japan.
-    $this->requestDate = Util::generateJapanTime('Ymdhis');
+    $this->requestDate = Util::generateJapanTime('YmdHis');
   }
 
   /**
