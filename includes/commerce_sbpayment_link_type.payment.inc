@@ -127,7 +127,11 @@ function commerce_sbpayment_link_type_submit_form_validate($payment_method, $pan
  */
 function commerce_sbpayment_link_type_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
   // Set the selected SoftBank payment method on the order.
-  $order->data['softbank_pay_method'] = $pane_values['softbank_pay_method'];
+  if (empty($order->data['softbank'])) {
+    $order->data['softbank'] = array();
+  }
+
+  $order->data['softbank']['pay_method'] = $pane_values['softbank_pay_method'];
 }
 
 /**
@@ -171,11 +175,11 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
 
     // Prepare the data required by the payment service.
     $payment_data = array(
-      'pay_method' => $order->data['softbank_pay_method'],
+      'pay_method' => $order->data['softbank']['pay_method'],
       'merchant_id' => $payment_method['settings']['merchant_id'],
       'service_id' => $payment_method['settings']['service_id'],
       'cust_code' => $order->uid == 0 ? $sbpayment_service::DUMMY_CUST_CODE : $order->uid,
-      'order_id' => $order->order_number,
+      'order_id' => _commerce_sbpayment_prepare_order_number($order),
       'item_id' => $order->order_id,
       'item_name' => t('Order @order_number from @site_name', array(
         '@order_number' => $order->order_number,
@@ -239,6 +243,20 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
 
     return array();
   }
+}
+
+/**
+ * Payment method callback: redirect form back callback.
+ */
+function commerce_sbpayment_link_type_redirect_form_back($order, $payment_method) {
+  // Display a message indicating the customer initiatied cancellation.
+  drupal_set_message(t('You have canceled payment at SoftBank but may resume the process here when you are ready.'));
+
+  // Remove the payment information from the order data array.
+  unset($order->data['softbank']['pay_method']);
+
+  // Increment the payment attempts counter.
+  $order->data['softbank']['payment_attempts'] = !empty($order->data['softbank']['payment_attempts']) ? ++$order->data['softbank']['payment_attempts'] : 1;
 }
 
 /**

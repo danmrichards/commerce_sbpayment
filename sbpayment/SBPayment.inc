@@ -198,7 +198,13 @@ abstract class SBPayment {
       }
 
       // Set the field or blank it out if not present.
-      $this->paymentData[$field_name] = !empty($payment_data[$field_name]) ? trim($payment_data[$field_name]) : '';
+      $this->paymentData[$field_name] = '';
+      if (!empty($payment_data[$field_name])) {
+        $this->paymentData[$field_name] = trim($payment_data[$field_name]);
+      }
+      elseif (isset($payment_data[$field_name]) && $payment_data[$field_name] === 0) {
+        $this->paymentData[$field_name] = $payment_data[$field_name];
+      }
     });
   }
 

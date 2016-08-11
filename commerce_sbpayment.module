@@ -188,4 +188,27 @@ function _commerce_sbpayment_payment_method_options($payment_methods) {
   return $payment_method_options;
 }
 
+/**
+ * Prepare an order number for use in a SoftBank request.
+ *
+ * Each request must have a unique order number, even if the user canceled and
+ * wants to try payment again.
+ *
+ * @param object $order
+ *   A fully loaded Drupal commerce order.
+ *
+ * @return string
+ *   The prepared order number.
+ */
+function _commerce_sbpayment_prepare_order_number($order) {
+  $order_number = $order->order_number;
+
+  // Append the number of payment attempts.
+  if (!empty($order->data['softbank']['payment_attempts'])) {
+    $order_number .= '__' . $order->data['softbank']['payment_attempts'];
+  }
+
+  return $order_number;
+}
+
 // TODO: Add helper for saving transactions.
