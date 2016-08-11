@@ -21,6 +21,18 @@
  * @see commerce_sbpayment_services()
  */
 function commerce_sbpayment_notification_controller($sbpayment_service_name, $order, $payment_redirect_key) {
+  // Load the payment method instance.
+  $payment_method_id = sprintf('%s_%s', COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE, $sbpayment_service_name);
+  $payment_method_instance_id = sprintf('%s|commerce_payment_%s', $payment_method_id, $payment_method_id);
+  $sbpayment_method = commerce_payment_method_instance_load($payment_method_instance_id);
+
+  // Log the debug data if required.
+  if ((bool) $sbpayment_method['settings']['debug'] === TRUE) {
+    watchdog('commerce_sbpayment', 'Payment CGI Notification Debug: <pre>!data</pre>', array(
+      '!data' => print_r($_POST, TRUE),
+    ));
+  }
+
   print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
   die;
@@ -37,7 +49,7 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
 
     // Notification data from SoftBank looks ok. Check the redirect key matches.
     if ($payment_redirect_key != $order->data['payment_redirect_key']) {
-      return "{$sbpayment_response::RESPONSE_FAIL}, Invalid payment redirect key";
+      return $sbpayment_response::RESPONSE_FAIL . ", Invalid payment redirect key";
     }
 
     // Create the drupal transaction.

@@ -18,7 +18,7 @@ function commerce_sbpayment_link_type_settings_form($settings = array()) {
   $settings = (array) $settings + commerce_sbpayment_link_type_default_settings();
 
   $form['mode'] = array(
-    '#type' => 'select',
+    '#type' => 'radios',
     '#title' => t('Gateway mode'),
     '#description' => t('The mode in which to use the SoftBank Payment Service.'),
     '#options' => _commerce_sbpayment_mode_options(),
@@ -77,6 +77,18 @@ function commerce_sbpayment_link_type_settings_form($settings = array()) {
   $form['service_type'] = array(
     '#type' => 'value',
     '#default_value' => $settings['service_type'],
+  );
+
+  $form['debug'] = array(
+    '#type' => 'radios',
+    '#title' => t('Debug'),
+    '#description' => t('Output payment request and response information to the system log. This should not be enabled in production.'),
+    '#options' => array(
+      0 => t('Off'),
+      1 => t('On'),
+    ),
+    '#default_value' => $settings['debug'],
+    '#required' => TRUE,
   );
 
   return $form;
@@ -197,7 +209,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'terminal_type' => 0,
       'success_url' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'cancel_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-      'error_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
+      'error_url' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $sbpayment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
     );
 
@@ -235,7 +247,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     $sbpayment_service->setProducts($sbpayment_products);
 
     // Generate the redirect form for this order and service.
-    return commerce_sbpayment_service_order_form($sbpayment_service, $order);
+    return commerce_sbpayment_service_order_form($sbpayment_service, $order, (bool) $payment_method['settings']['debug']);
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);
@@ -265,6 +277,13 @@ function commerce_sbpayment_link_type_redirect_form_back($order, $payment_method
  * @see commerce_payment_redirect_pane_checkout_form()
  */
 function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_method) {
+  // Log the debug data if required.
+  if ((bool) $payment_method['settings']['debug'] === TRUE) {
+    watchdog('commerce_sbpayment', 'Payment Response Debug: <pre>!data</pre>', array(
+      '!data' => print_r($_POST, TRUE),
+    ));
+  }
+
   // TODO: Implement redirect form validation.
   print __FUNCTION__ . "\r\n";
   print_r(func_get_args());
@@ -315,6 +334,7 @@ function commerce_sbpayment_link_type_default_settings() {
     'auto_charge_type' => 0,
     'service_type' => 0,
     'hash_key' => '',
+    'debug' => 0,
   );
 }
 
@@ -345,11 +365,13 @@ function commerce_sbpayment_link_type_validate_settings($settings) {
  *   The payment service object with payment data set.
  * @param object $order
  *   A fully loaded commerce order object.
+ * @param bool $debug
+ *   Should debug information on the payment request be logged?
  *
  * @return array
  *   A renderable Drupal form array.
  */
-function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sbpayment_service, $order) {
+function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sbpayment_service, $order, $debug = FALSE) {
   $form = array();
 
   // Set the SoftBank service URL.
@@ -404,6 +426,13 @@ function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sb
   );
 
   $form['#pre_render'][] = 'commerce_sbpayment_service_order_form_pre_render';
+
+  // Log the debug data if required.
+  if ($debug === TRUE) {
+    watchdog('commerce_sbpayment', 'Payment Request Debug: <pre>!data</pre>', array(
+      '!data' => print_r($form, TRUE),
+    ));
+  }
 
   return $form;
 }
