@@ -311,6 +311,9 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
     watchdog_exception('commerce_sbpayment', $e);
     drupal_set_message(t('A problem occurred when processing your payment with the SoftBank Payment Service. If the problem persists please contact an administrator.'), 'error');
 
+    // Increment the payment attempts counter.
+    $order->data['softbank']['payment_attempts'] = !empty($order->data['softbank']['payment_attempts']) ? ++$order->data['softbank']['payment_attempts'] : 1;
+
     // Store a record of the failed transaction and send the user back to the
     // previous checkout page.
     commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);

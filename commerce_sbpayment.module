@@ -149,6 +149,8 @@ function commerce_sbpayment_get_service_object($machine_name) {
  * @see commerce_payment_methods()
  */
 function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Response\ResponseInterface $sbpayment_response, $order) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
   // Determine the status for this payment.
   if ($sbpayment_response->getRemoteStatus() === $sbpayment_response::RESPONSE_OK) {
     $payment_status = COMMERCE_PAYMENT_STATUS_SUCCESS;
@@ -158,15 +160,19 @@ function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Res
     $payment_status = COMMERCE_PAYMENT_STATUS_FAILURE;
   }
 
+  // Get the remote status and ID.
+  $remote_status = $sbpayment_response->getRemoteStatus();
+  $remote_id = $sbpayment_response->getRemoteId();
+
   // Build an array of conditions to check if a matching transaction
   // already exists.
   $conditions = array(
     'order_id' => $order->order_id,
     'instance_id' => $payment_method['instance_id'],
-    'payment_method' => COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE,
+    'payment_method' => $payment_method['method_id'],
     'status' => $payment_status,
-    'remote_status' => $sbpayment_response->getRemoteStatus(),
-    'remote_id' => $sbpayment_response->getRemoteId(),
+    'remote_status' => $remote_status,
+    'remote_id' => $remote_id,
   );
 
   // Check for an existing transaction with these conditions.
@@ -181,16 +187,18 @@ function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Res
   // Set the transaction data.
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->status = $payment_status;
-  $transaction->remote_status = $sbpayment_response->getRemoteStatus();
-  $transaction->remote_id = $sbpayment_response->getRemoteId();
+  $transaction->remote_status = $remote_status;
+  $transaction->remote_id = $remote_id;
+  $transaction->amount = (int) $order_wrapper->commerce_order_total->amount->value();
+  $transaction->currency_code = $order_wrapper->commerce_order_total->currency_code->value();
   $transaction->payload = !empty($sbpayment_response->toArray()) ? $sbpayment_response->toArray() : array();
 
   // Build the transaction message.
   $transaction->message = 'Payment status: @status. SoftBank Status: @remote_status. SoftBank Tracking ID: @remote_id.';
   $transaction->message_variables = array(
     '@status' => $payment_status,
-    '@remote_status' => $sbpayment_response->getRemoteStatus(),
-    '@remote_id' => $sbpayment_response->getRemoteId(),
+    '@remote_status' => !empty($remote_status) ? $remote_status : 'missing',
+    '@remote_id' => !empty($remote_id) ? $remote_id : 'missing',
   );
 
   commerce_payment_transaction_save($transaction);

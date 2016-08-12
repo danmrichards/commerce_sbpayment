@@ -61,6 +61,8 @@ class PurchaseResult implements ResponseInterface {
 
       $this->data[$mandatory_field] = $data[$mandatory_field];
     }
+
+    // TODO: Verify the returned payment hash.
   }
 
   /**
