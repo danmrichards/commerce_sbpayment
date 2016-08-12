@@ -41,7 +41,7 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
   $sbpayment_service = commerce_sbpayment_get_service_object($sbpayment_service_name);
 
   // Create the repsonse handler.
-  $sbpayment_response_class = $sbpayment_service->getResponseHandler();
+  $sbpayment_response_class = $sbpayment_service->getNotificationHandler();
 
   try {
     // Attempt the create the response object.

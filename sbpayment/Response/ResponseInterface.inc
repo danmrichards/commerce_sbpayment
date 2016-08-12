@@ -27,20 +27,36 @@ interface ResponseInterface {
   const RESPONSE_FAIL = 'NG';
 
   /**
-   * Constructor.
+   * Set the payment response data.
    *
    * @param array $data
    *   The data provided by the SoftBank API to this response.
    */
-  public function __construct(array $data);
+  public function setResponseData(array $data);
 
   /**
-   * Get the SoftBank payment result based on the current data.
+   * Get the SoftBank payment status based on the current data.
    *
    * @return string
-   *   A payment result string based on the constants in this interface.
+   *   A payment status string from SoftBank.
    */
-  public function getResult();
+  public function getRemoteStatus();
+
+  /**
+   * Get the SoftBank internal ID for the payment associated with this response.
+   *
+   * @return string
+   *   A unique ID string containing the SoftBank payment ID.
+   */
+  public function getRemoteId();
+
+  /**
+   * Get an array representation of this response.
+   *
+   * @return array
+   *   Array containing the response data.
+   */
+  public function toArray();
 
   /**
    * Get the response string.

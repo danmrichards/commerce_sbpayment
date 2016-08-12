@@ -5,9 +5,7 @@
  * Contains \Commerce\SBPayment\Response\LinkTypeCgi.
  */
 
-namespace Commerce\SBPayment;
-
-use Commerce\SBPayment\Response\ResponseInterface;
+namespace Commerce\SBPayment\Response;
 
 /**
  * SoftBank response class for the 'Link Type' service CGI notification.
@@ -17,16 +15,16 @@ class LinkTypeCgi implements ResponseInterface {
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $data) {};
+  public function setResponseData(array $data) {}
 
   /**
    * {@inheritdoc}
    */
-  public function getResult() {}
+  public function getRemoteStatus() {}
 
   /**
    * {@inheritdoc}
    */
-  public function __toString() {};
+  public function __toString() {}
 
 }

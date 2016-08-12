@@ -5,9 +5,9 @@
  * Contains \Commerce\SBPayment\Response\PurchaseResult.
  */
 
-namespace Commerce\SBPayment;
+namespace Commerce\SBPayment\Response;
 
-use Commerce\SBPayment\Response\ResponseInterface;
+use Commerce\SBPayment\SBPaymentException;
 
 /**
  * SoftBank response class for the 'Link Type' service purchase result.
@@ -15,18 +15,80 @@ use Commerce\SBPayment\Response\ResponseInterface;
 class PurchaseResult implements ResponseInterface {
 
   /**
-   * {@inheritdoc}
+   * List of fields that are always expected in the response data.
+   *
+   * @var array
    */
-  public function __construct(array $data) {};
+  private $mandatoryResultFields = array(
+    'res_pay_method',
+    'res_result',
+    'res_tracking_id',
+    'res_date',
+    'limit_second',
+    'sps_hashcode',
+  );
+
+  /**
+   * Store the response data from SoftBank.
+   *
+   * @var array
+   */
+  private $data;
+
+  /**
+   * Result of this payment response.
+   *
+   * @var string
+   */
+  private $result = ResponseInterface::RESPONSE_OK;
 
   /**
    * {@inheritdoc}
    */
-  public function getResult() {}
+  public function setResponseData(array $data) {
+    // Ensure we have some response data.
+    if (empty($data)) {
+      $this->result = ResponseInterface::RESPONSE_FAIL;
+      throw new SBPaymentException('Response data from SoftBank was empty.');
+    }
+
+    // Ensure all of the mandatory fields are present in the response data.
+    foreach ($this->mandatoryResultFields as $mandatory_field) {
+      if (empty($data[$mandatory_field])) {
+        $this->result = ResponseInterface::RESPONSE_FAIL;
+        throw new SBPaymentException(sprintf('Mandatory field %s is not populated in response data from SoftBank.', $mandatory_field));
+      }
+
+      $this->data[$mandatory_field] = $data[$mandatory_field];
+    }
+  }
 
   /**
    * {@inheritdoc}
    */
-  public function __toString() {};
+  public function getRemoteStatus() {
+    return !empty($this->data['res_result']) ? $this->data['res_result'] : '';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getRemoteId() {
+    return !empty($this->data['res_tracking_id']) ? $this->data['res_tracking_id'] : '';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function toArray() {
+    return $this->data;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __toString() {
+    return $this->result;
+  }
 
 }

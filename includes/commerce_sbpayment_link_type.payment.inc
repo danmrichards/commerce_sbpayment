@@ -284,20 +284,19 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
     ));
   }
 
-  // TODO: Implement redirect form validation.
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
+  // Determine the SoftBank payment service.
+  $sbpayment_service_name = str_replace(COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE . '_', '', $payment_method['method_id']);
 
   // Get the service object.
   $sbpayment_service = commerce_sbpayment_get_service_object($sbpayment_service_name);
 
   // Create the repsonse handler.
-  $sbpayment_response_class = $sbpayment_service->getResponseHandler();
+  $sbpayment_response_class = $sbpayment_service->getResultHandler();
 
   try {
     // Attempt the create the response object.
-    $sbpayment_response = new $sbpayment_response_class($_POST);
+    $sbpayment_response = new $sbpayment_response_class();
+    $sbpayment_response->setResponseData($_POST);
 
     // TODO: Handle each payment result accordingly.
     switch ($sbpayment_response->getResultCode()) {
@@ -305,11 +304,16 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
     }
 
     // Create the drupal transaction.
-    //commerce_sbpayment_transaction($sbpayment_service_name, $sbpayment_response, $order);
+    //commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
+    // Log the error.
     watchdog_exception('commerce_sbpayment', $e);
-    drupal_set_message(t('A problem occurred when starting the SoftBank Payment Service. Please contact an administrator.'), 'error');
+    drupal_set_message(t('A problem occurred when processing your payment with the SoftBank Payment Service. If the problem persists please contact an administrator.'), 'error');
+
+    // Store a record of the failed transaction and send the user back to the
+    // previous checkout page.
+    commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);
     commerce_payment_redirect_pane_previous_page($order);
 
     return FALSE;

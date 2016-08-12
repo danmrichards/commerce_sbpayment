@@ -139,15 +139,61 @@ function commerce_sbpayment_get_service_object($machine_name) {
 /**
  * Creates/Updates a commerce payment transaction based on SoftBank data.
  *
- * @param string $sbpayment_service_name
- *   A valid SoftBank payment service machine name.
+ * @param array $payment_method
+ *   Payment method information array.
  * @param Commerce\SBPayment\Response\ResponseInterface $sbpayment_response
  *   A SoftBank payment response object.
  * @param object $order
  *   A fully loaded commerce order object.
+ *
+ * @see commerce_payment_methods()
  */
-function commerce_sbpayment_transaction($sbpayment_service_name, Commerce\SBPayment\Response\ResponseInterface $sbpayment_response, $order) {
-  die(print_r(func_get_args()));
+function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Response\ResponseInterface $sbpayment_response, $order) {
+  // Determine the status for this payment.
+  if ($sbpayment_response->getRemoteStatus() === $sbpayment_response::RESPONSE_OK) {
+    $payment_status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  }
+  else {
+    // Assume it's failed otherwise.
+    $payment_status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
+
+  // Build an array of conditions to check if a matching transaction
+  // already exists.
+  $conditions = array(
+    'order_id' => $order->order_id,
+    'instance_id' => $payment_method['instance_id'],
+    'payment_method' => COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE,
+    'status' => $payment_status,
+    'remote_status' => $sbpayment_response->getRemoteStatus(),
+    'remote_id' => $sbpayment_response->getRemoteId(),
+  );
+
+  // Check for an existing transaction with these conditions.
+  $transactions = commerce_payment_transaction_load_multiple(array(), $conditions);
+  $transaction = reset($transactions);
+
+  // Create a new transaction if required.
+  if (empty($transaction)) {
+    $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
+  }
+
+  // Set the transaction data.
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->status = $payment_status;
+  $transaction->remote_status = $sbpayment_response->getRemoteStatus();
+  $transaction->remote_id = $sbpayment_response->getRemoteId();
+  $transaction->payload = !empty($sbpayment_response->toArray()) ? $sbpayment_response->toArray() : array();
+
+  // Build the transaction message.
+  $transaction->message = 'Payment status: @status. SoftBank Status: @remote_status. SoftBank Tracking ID: @remote_id.';
+  $transaction->message_variables = array(
+    '@status' => $payment_status,
+    '@remote_status' => $sbpayment_response->getRemoteStatus(),
+    '@remote_id' => $sbpayment_response->getRemoteId(),
+  );
+
+  commerce_payment_transaction_save($transaction);
 }
 
 /**
@@ -208,5 +254,3 @@ function _commerce_sbpayment_prepare_order_number($order) {
 
   return $order_number;
 }
-
-// TODO: Add helper for saving transactions.
