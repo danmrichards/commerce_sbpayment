@@ -10,8 +10,8 @@
  *
  * @param string $sbpayment_service_name
  *   A valid SoftBank payment service machine name.
- * @param object $order
- *   A fully loaded commerce order object.
+ * @param int $order_id
+ *   A Drupal commerce order ID.
  * @param string $payment_redirect_key
  *   The payment redirect key as generated during the checkout process.
  *
@@ -20,7 +20,7 @@
  *
  * @see commerce_sbpayment_services()
  */
-function commerce_sbpayment_notification_controller($sbpayment_service_name, $order, $payment_redirect_key) {
+function commerce_sbpayment_notification_controller($sbpayment_service_name, $order_id, $payment_redirect_key) {
   // Load the payment method instance.
   $payment_method_id = sprintf('%s_%s', COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE, $sbpayment_service_name);
   $payment_method_instance_id = sprintf('%s|commerce_payment_%s', $payment_method_id, $payment_method_id);
@@ -33,10 +33,6 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
     ));
   }
 
-  print __FUNCTION__ . "\r\n";
-  print_r(func_get_args());
-  die;
-
   // Get the service object.
   $sbpayment_service = commerce_sbpayment_get_service_object($sbpayment_service_name);
 
@@ -45,15 +41,23 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
 
   try {
     // Attempt the create the response object.
-    $sbpayment_response = new $sbpayment_response_class($_POST);
+    $sbpayment_response = new $sbpayment_response_class();
 
-    // Notification data from SoftBank looks ok. Check the redirect key matches.
-    if ($payment_redirect_key != $order->data['payment_redirect_key']) {
-      return $sbpayment_response::RESPONSE_FAIL . ", Invalid payment redirect key";
+    // Load the order and check it is valid.
+    $order = commerce_order_load($order_id);
+    if (empty($order)) {
+      return $sbpayment_response::RESPONSE_FAIL . ', Invalid order ID';
     }
 
+    // Check the redirect key matches.
+    if ($payment_redirect_key != $order->data['payment_redirect_key']) {
+      return $sbpayment_response::RESPONSE_FAIL . ', Invalid payment redirect key';
+    }
+
+    $sbpayment_response->setResponseData($_POST);
+
     // Create the drupal transaction.
-    commerce_sbpayment_transaction($sbpayment_service_name, $sbpayment_response, $order);
+    commerce_sbpayment_transaction($sbpayment_method, $sbpayment_response, $order);
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);

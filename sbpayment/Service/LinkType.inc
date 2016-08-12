@@ -10,8 +10,7 @@ namespace Commerce\SBPayment\Service;
 use Commerce\SBPayment\SBPayment;
 use Commerce\SBPayment\SBPaymentException;
 use Commerce\SBPayment\Util\Util;
-use Commerce\SBPayment\Response\LinkTypeCgi;
-use Commerce\SBPayment\Response\PurchaseResult;
+use Commerce\SBPayment\Response\LinkTypeResponse;
 
 /**
  * Implements the SoftBank Payment 'Link Type' Service.
@@ -67,14 +66,14 @@ class LinkType extends SBPayment {
    * {@inheritdoc}
    */
   public function getNotificationHandler() {
-    return LinkTypeCgi::class;
+    return LinkTypeResponse::class;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getResultHandler() {
-    return PurchaseResult::class;
+    return LinkTypeResponse::class;
   }
 
   /**

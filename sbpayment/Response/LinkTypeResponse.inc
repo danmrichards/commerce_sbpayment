@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Commerce\SBPayment\Response\PurchaseResult.
+ * Contains \Commerce\SBPayment\Response\LinkTypeResponse.
  */
 
 namespace Commerce\SBPayment\Response;
@@ -10,9 +10,9 @@ namespace Commerce\SBPayment\Response;
 use Commerce\SBPayment\SBPaymentException;
 
 /**
- * SoftBank response class for the 'Link Type' service purchase result.
+ * SoftBank response class for the 'Link Type' service.
  */
-class PurchaseResult implements ResponseInterface {
+class LinkTypeResponse implements ResponseInterface {
 
   /**
    * List of fields that are always expected in the response data.
@@ -24,7 +24,6 @@ class PurchaseResult implements ResponseInterface {
     'res_result',
     'res_tracking_id',
     'res_date',
-    'limit_second',
     'sps_hashcode',
   );
 
@@ -43,20 +42,29 @@ class PurchaseResult implements ResponseInterface {
   private $result = ResponseInterface::RESPONSE_OK;
 
   /**
+   * Result message.
+   *
+   * @var string
+   */
+  private $message;
+
+  /**
    * {@inheritdoc}
    */
   public function setResponseData(array $data) {
     // Ensure we have some response data.
     if (empty($data)) {
       $this->result = ResponseInterface::RESPONSE_FAIL;
-      throw new SBPaymentException('Response data from SoftBank was empty.');
+      $this->message = 'Response data from SoftBank was empty.';
+      throw new SBPaymentException($this->message);
     }
 
     // Ensure all of the mandatory fields are present in the response data.
     foreach ($this->mandatoryResultFields as $mandatory_field) {
       if (empty($data[$mandatory_field])) {
         $this->result = ResponseInterface::RESPONSE_FAIL;
-        throw new SBPaymentException(sprintf('Mandatory field %s is not populated in response data from SoftBank.', $mandatory_field));
+        $this->message = sprintf('Mandatory field %s is not populated in response data from SoftBank.', $mandatory_field);
+        throw new SBPaymentException($this->message);
       }
 
       $this->data[$mandatory_field] = $data[$mandatory_field];
@@ -90,7 +98,13 @@ class PurchaseResult implements ResponseInterface {
    * {@inheritdoc}
    */
   public function __toString() {
-    return $this->result;
+    $output = $this->result;
+
+    if (!empty($this->message)) {
+      $output .= ', ' . $this->message;
+    }
+
+    return $output;
   }
 
 }

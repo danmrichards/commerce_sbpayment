@@ -57,7 +57,7 @@ function commerce_sbpayment_commerce_payment_method_info() {
 function commerce_sbpayment_menu() {
   $items = array();
 
-  $items[COMMERCE_SBPAYMENT_BASE_URL . '/%/%commerce_order/%'] = array(
+  $items[COMMERCE_SBPAYMENT_BASE_URL . '/%/%/%'] = array(
     'type' => MENU_CALLBACK,
     'file' => 'includes/commerce_sbpayment.menu.inc',
     'page callback' => 'commerce_sbpayment_notification_controller',
