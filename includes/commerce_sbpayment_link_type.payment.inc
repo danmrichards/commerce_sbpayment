@@ -298,13 +298,31 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
     $sbpayment_response = new $sbpayment_response_class();
     $sbpayment_response->setResponseData($_POST);
 
-    // TODO: Handle each payment result accordingly.
-    switch ($sbpayment_response->getResultCode()) {
-
-    }
-
     // Create the drupal transaction.
-    //commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);
+    commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);
+
+    // Handle each payment result accordingly.
+    switch ($sbpayment_response->getRemoteStatus()) {
+      case $sbpayment_response::RESPONSE_FAIL:
+        commerce_payment_redirect_pane_previous_page($order);
+        drupal_set_message(t('A problem occurred when processing your payment with the SoftBank Payment Service. If the problem persists please contact an administrator.'), 'error');
+        return FALSE;
+
+      case $sbpayment_response::RESPONSE_CANCELED:
+        commerce_payment_redirect_pane_previous_page($order);
+        drupal_set_message(t('Your payment with the SoftBank Payment Service was canceled.'), 'error');
+        return FALSE;
+
+      case $sbpayment_response::RESPONSE_TERMINATED:
+        commerce_payment_redirect_pane_previous_page($order);
+        drupal_set_message(t('Your payment with the SoftBank Payment Service was terminated by the carrier.'), 'error');
+        return FALSE;
+
+      case $sbpayment_response::RESPONSE_EXPIRED:
+        commerce_payment_redirect_pane_previous_page($order);
+        drupal_set_message(t('Your payment request with the SoftBank Payment Service has expired.'), 'error');
+        return FALSE;
+    }
   }
   catch (\Commerce\SBPayment\SBPaymentException $e) {
     // Log the error.

@@ -194,7 +194,7 @@ function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Res
   $transaction->payload = !empty($sbpayment_response->toArray()) ? $sbpayment_response->toArray() : array();
 
   // Build the transaction message.
-  $transaction->message = 'Payment status: @status. SoftBank Status: @remote_status. SoftBank Tracking ID: @remote_id.';
+  $transaction->message = 'Payment status: @status. SoftBank status: @remote_status. SoftBank tracking ID: @remote_id.';
   $transaction->message_variables = array(
     '@status' => $payment_status,
     '@remote_status' => !empty($remote_status) ? $remote_status : 'missing',

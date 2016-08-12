@@ -13,18 +13,53 @@ namespace Commerce\SBPayment\Response;
 interface ResponseInterface {
 
   /**
-   * String expected by SoftBank in the event of a succesful response.
+   * String indicating a succesful response.
    *
    * @var string
    */
   const RESPONSE_OK = 'OK';
 
   /**
-   * String expected by SoftBank in the event of a failed response.
+   * String indicating a failed response.
    *
    * @var string
    */
   const RESPONSE_FAIL = 'NG';
+
+  /**
+   * String indicating a canceled charge.
+   *
+   * @var string
+   */
+  const RESPONSE_CANCELED = 'CR';
+
+  /**
+   * String indicating a termination on the carrier side.
+   *
+   * @var string
+   */
+  const RESPONSE_TERMINATED = 'CC';
+
+  /**
+   * String indicating a deposit receipt notification.
+   */
+  const RESPONSE_DEPOSIT = 'PY';
+
+  /**
+   * String indicating a canceled charge due to expiration.
+   *
+   * @var string
+   */
+  const RESPONSE_EXPIRED = 'CN';
+
+  /**
+   * String indicating a canceled charge due to last billing month.
+   *
+   * Only applies to RECUIT Kantan.
+   *
+   * @var string
+   */
+  const RESPONSE_LAST_MONTH = 'CL';
 
   /**
    * Set the payment response data.
