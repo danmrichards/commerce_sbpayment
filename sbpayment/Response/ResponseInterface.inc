@@ -66,6 +66,8 @@ interface ResponseInterface {
    *
    * @param array $data
    *   The data provided by the SoftBank API to this response.
+   *
+   * @throws SBPaymentException
    */
   public function setResponseData(array $data);
 

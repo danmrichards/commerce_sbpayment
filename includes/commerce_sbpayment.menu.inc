@@ -5,6 +5,8 @@
  * Menu callbacks for Commerce SoftBank Payment Service.
  */
 
+use Commerce\SBPayment\SBPaymentException;
+
 /**
  * Payment notification controller.
  *
@@ -28,7 +30,7 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
 
   // Log the debug data if required.
   if ((bool) $sbpayment_method['settings']['debug'] === TRUE) {
-    watchdog('commerce_sbpayment', 'Payment CGI Notification Debug: <pre>!data</pre>', array(
+    watchdog('commerce_sbpayment', 'Payment CGI notification debug: <pre>!data</pre>', array(
       '!data' => print_r($_POST, TRUE),
     ));
   }
@@ -59,7 +61,7 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
     // Create the drupal transaction.
     commerce_sbpayment_transaction($sbpayment_method, $sbpayment_response, $order);
   }
-  catch (\Commerce\SBPayment\SBPaymentException $e) {
+  catch (SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);
     drupal_set_message(t('A problem occurred when starting the SoftBank Payment Service. Please contact an administrator.'), 'error');
   }

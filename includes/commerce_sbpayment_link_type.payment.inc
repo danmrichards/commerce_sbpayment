@@ -5,6 +5,11 @@
  * Drupal Commerce payment method callbacks for SoftBank Payment Service.
  */
 
+use Commerce\SBPayment\SBPayment;
+use Commerce\SBPayment\SBPaymentException;
+use Commerce\SBPayment\Payment\Methods;
+use Commerce\SBPayment\Product\LinkTypeProduct;
+
 /**
  * Payment method callback: settings form.
  *
@@ -31,7 +36,7 @@ function commerce_sbpayment_link_type_settings_form($settings = array()) {
     '#title' => t('Enabled payment methods'),
     '#description' => t('Choose the payment methods available to the customer'),
     '#multiple' => TRUE,
-    '#options' => \Commerce\SBPayment\Payment\Methods::$methods,
+    '#options' => Methods::$methods,
     '#default_value' => $settings['pay_methods'],
     '#size' => 15,
     '#required' => TRUE,
@@ -151,7 +156,7 @@ function commerce_sbpayment_link_type_submit_form_submit($payment_method, $pane_
  *
  * @see commerce_payment_redirect_pane_checkout_form()
  *
- * @throws \Commerce\SBPayment\SBPaymentException
+ * @throws SBPaymentException
  */
 function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order, $payment_method) {
   // Ensure that the payment method has been correctly configured.
@@ -167,7 +172,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
   try {
     // Check the payment service was correctly instantiated.
     if ($sbpayment_service === FALSE) {
-      throw new \Commerce\SBPayment\SBPaymentException(t('Service object could not be instantiated for machine name @machine_name', array('@machine_name' => $sbpayment_service_machine_name)));
+      throw new SBPaymentException(t('Service object could not be instantiated for machine name @machine_name', array('@machine_name' => $sbpayment_service_machine_name)));
     }
 
     // Load the order wrapper.
@@ -178,7 +183,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
 
     // Ensure the order total is in JPY.
     if ($order_total['currency_code'] != 'JPY') {
-      throw new \Commerce\SBPayment\SBPaymentException(t('Invalid order currency detected. Expected: JPY, Got: @currency_code', array('@currency_code' => $order_total['currency_code'])));
+      throw new SBPaymentException(t('Invalid order currency detected. Expected: JPY, Got: @currency_code', array('@currency_code' => $order_total['currency_code'])));
     }
 
     // Set the gateway mode and encryption hash key.
@@ -218,7 +223,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
 
     // Loop through the order contents.
     $i = 1;
-    foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
       // We only want to check products.
       if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
         // Ensure the product is valid.
@@ -229,7 +234,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
           // Prepare the product data.
           // TODO: Add the tax component of the product price. Maybe only needed
           // for bank transfers?
-          $sbpayment_products[] = new \Commerce\SBPayment\Product\LinkTypeProduct(array(
+          $sbpayment_products[] = new LinkTypeProduct(array(
             'dtl_rowno' => $i,
             'dtl_item_id' => $product->sku,
             'dtl_item_name' => $product->title,
@@ -249,7 +254,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     // Generate the redirect form for this order and service.
     return commerce_sbpayment_service_order_form($sbpayment_service, $order, (bool) $payment_method['settings']['debug']);
   }
-  catch (\Commerce\SBPayment\SBPaymentException $e) {
+  catch (SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);
     drupal_set_message(t('A problem occurred when starting the SoftBank Payment Service. Please contact an administrator.'), 'error');
 
@@ -279,7 +284,7 @@ function commerce_sbpayment_link_type_redirect_form_back($order, $payment_method
 function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_method) {
   // Log the debug data if required.
   if ((bool) $payment_method['settings']['debug'] === TRUE) {
-    watchdog('commerce_sbpayment', 'Payment Response Debug: <pre>!data</pre>', array(
+    watchdog('commerce_sbpayment', 'Payment response debug: <pre>!data</pre>', array(
       '!data' => print_r($_POST, TRUE),
     ));
   }
@@ -324,7 +329,7 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
         return FALSE;
     }
   }
-  catch (\Commerce\SBPayment\SBPaymentException $e) {
+  catch (SBPaymentException $e) {
     // Log the error.
     watchdog_exception('commerce_sbpayment', $e);
     drupal_set_message(t('A problem occurred when processing your payment with the SoftBank Payment Service. If the problem persists please contact an administrator.'), 'error');
@@ -351,7 +356,7 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
  */
 function commerce_sbpayment_link_type_default_settings() {
   return array(
-    'mode' => \Commerce\SBPayment\SBPayment::API_MODE_TEST,
+    'mode' => SBPayment::API_MODE_TEST,
     'pay_methods' => array(),
     'merchant_id' => '',
     'service_id' => '',
@@ -396,7 +401,7 @@ function commerce_sbpayment_link_type_validate_settings($settings) {
  * @return array
  *   A renderable Drupal form array.
  */
-function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sbpayment_service, $order, $debug = FALSE) {
+function commerce_sbpayment_service_order_form(SBPayment $sbpayment_service, $order, $debug = FALSE) {
   $form = array();
 
   // Set the SoftBank service URL.
@@ -454,7 +459,7 @@ function commerce_sbpayment_service_order_form(\Commerce\SBPayment\SBPayment $sb
 
   // Log the debug data if required.
   if ($debug === TRUE) {
-    watchdog('commerce_sbpayment', 'Payment Request Debug: <pre>!data</pre>', array(
+    watchdog('commerce_sbpayment', 'Payment request debug: <pre>!data</pre>', array(
       '!data' => print_r($form, TRUE),
     ));
   }
