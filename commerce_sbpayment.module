@@ -6,7 +6,6 @@
  */
 
 // TODO: Add unit tests to validate API functionality.
-// TODO: Add README.
 
 define('COMMERCE_SBPAYMENT_BASE_URL', 'commerce/sbpayment');
 define('COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE', 'commerce_sbpayment');
