@@ -285,7 +285,7 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
   // Log the debug data if required.
   if ((bool) $payment_method['settings']['debug'] === TRUE) {
     watchdog('commerce_sbpayment', 'Payment response debug: <pre>!data</pre>', array(
-      '!data' => print_r($_POST, TRUE),
+      '!data' => var_export($_POST, TRUE),
     ));
   }
 
@@ -460,7 +460,7 @@ function commerce_sbpayment_service_order_form(SBPayment $sbpayment_service, $or
   // Log the debug data if required.
   if ($debug === TRUE) {
     watchdog('commerce_sbpayment', 'Payment request debug: <pre>!data</pre>', array(
-      '!data' => print_r($form, TRUE),
+      '!data' => var_export($form, TRUE),
     ));
   }
 

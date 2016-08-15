@@ -31,7 +31,7 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
   // Log the debug data if required.
   if ((bool) $sbpayment_method['settings']['debug'] === TRUE) {
     watchdog('commerce_sbpayment', 'Payment CGI notification debug: <pre>!data</pre>', array(
-      '!data' => print_r($_POST, TRUE),
+      '!data' => var_export($_POST, TRUE),
     ));
   }
 
