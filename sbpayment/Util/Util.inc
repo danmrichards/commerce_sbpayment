@@ -9,6 +9,7 @@ namespace Commerce\SBPayment\Util;
 
 use DateTime;
 use DateTimeZone;
+use Commerce\SBPayment\SBPaymentException;
 
 /**
  * A utility class providing common functionaltiy for SoftBank API usage.
@@ -29,6 +30,37 @@ class Util {
   public static function generateJapanTime($format) {
     $datetime = new DateTime('now', new DateTimeZone('Asia/Tokyo'));
     return $datetime->format($format);
+  }
+
+  /**
+   * Generates a SoftBank Payment Service hashcode.
+   *
+   * Intended for usage in payment requests, verification of payment cgi
+   * notification and verification of response data.
+   *
+   * @param array $data
+   *   Array of data being used in the request/verification.
+   * @param string $hashKey
+   *   Hash key assigned by SoftBank for the merchant account.
+   *
+   * @return string
+   *   A valid checksum string based on the data and hash key.
+   */
+  public static function generateSpsHashcode(array $data, $hashKey) {
+    // We can't continue without the hash key.
+    if (empty($hashKey)) {
+      throw new SBPaymentException('SoftBank hash key is missing');
+    }
+
+    // Concatenate the data and append the hash key.
+    $checksum_string = implode('', $data);
+    $checksum_string .= $hashKey;
+
+    // We need to convert the encoding to allow for japanese characters.
+    $checksum_string = mb_convert_encoding($checksum_string, 'UTF-8', 'SJIS');
+
+    // Calculate the hash code.
+    return sha1($checksum_string);
   }
 
 }

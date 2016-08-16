@@ -121,23 +121,24 @@ class LinkType extends SBPayment {
       throw new SBPaymentException('SoftBank hash key is missing');
     }
 
-    // Generate the initial checksum string with just the payment data.
-    $checksum_string = implode('', $this->paymentData);
+    // Start with the payment data.
+    $checksum_data = $this->paymentData;
 
     // Append the data for each product.
+    $i = 1;
     foreach ($this->products as $product) {
-      $checksum_string .= (string) $product;
+      foreach ($product->toArray() as $product_field => $product_data) {
+        $checksum_data[$product_field . '__' . $i] = $product_data;
+      }
+      ++$i;
     }
 
-    // Append the final pieces of manually set data.
-    $checksum_string .= $this->requestDate;
-    $checksum_string .= $this->limitSecond;
-    $checksum_string .= $this->hashKey;
+    // Add the final details.
+    $checksum_data['request_date'] = $this->requestDate;
+    $checksum_data['limit_second'] = $this->limitSecond;
 
-    $checksum_string = mb_convert_encoding($checksum_string, 'UTF-8', 'SJIS');
-
-    // Calculate the hash.
-    return sha1($checksum_string);
+    // Generate the hash code.
+    return Util::generateSpsHashcode($checksum_data, $this->hashKey);
   }
 
   /**
