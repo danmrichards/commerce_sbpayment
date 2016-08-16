@@ -118,7 +118,7 @@ class LinkTypeResponse extends Response {
     // Verify the request_date field seperately because it has to be inserted in
     // the checksum string after the product data.
     if (!empty($this->data['request_date'])) {
-      $checksum_data = $this->data['request_date'];
+      $checksum_data['request_date'] = $this->data['request_date'];
     }
     else {
       $this->error('Mandatory response field request_date is not populated.');

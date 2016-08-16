@@ -5,6 +5,11 @@
  * Implements the SoftBank Payment Service for use with Drupal Commerce.
  */
 
+use Commerce\SBPayment\SBPayment;
+use Commerce\SBPayment\Service\LinkType;
+use Commerce\SBPayment\Response\Response;
+use Commerce\SBPayment\Payment\Methods;
+
 // TODO: Add unit tests to validate API functionality.
 
 define('COMMERCE_SBPAYMENT_BASE_URL', 'commerce/sbpayment');
@@ -95,9 +100,9 @@ function commerce_sbpayment_deliver($response) {
 function commerce_sbpayment_services() {
   // TODO: The XML API can be implemented here if required in future.
   return array(
-    (string) new \Commerce\SBPayment\Service\LinkType() => array(
+    (string) new LinkType() => array(
       'name' => t('Link Type'),
-      'class' => \Commerce\SBPayment\Service\LinkType::class,
+      'class' => LinkType::class,
     ),
   );
 }
@@ -120,7 +125,7 @@ function commerce_sbpayment_get_service_object($machine_name) {
   }
 
   // Check if the defined class exists and extends the correct abstract class.
-  if (!class_exists($sbpayment_service['class']) || !is_subclass_of($sbpayment_service['class'], \Commerce\SBPayment\SBPayment::class)) {
+  if (!class_exists($sbpayment_service['class']) || !is_subclass_of($sbpayment_service['class'], SBPayment::class)) {
     return FALSE;
   }
 
@@ -255,14 +260,14 @@ function commerce_sbpayment_service_order_form_pre_render($form) {
  *
  * @param array $payment_method
  *   Payment method information array.
- * @param Commerce\SBPayment\Response\ResponseInterface $sbpayment_response
+ * @param Response $sbpayment_response
  *   A SoftBank payment response object.
  * @param object $order
  *   A fully loaded commerce order object.
  *
  * @see commerce_payment_methods()
  */
-function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Response\ResponseInterface $sbpayment_response, $order) {
+function commerce_sbpayment_transaction($payment_method, Response $sbpayment_response, $order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   // Determine the status for this payment.
@@ -326,8 +331,8 @@ function commerce_sbpayment_transaction($payment_method, \Commerce\SBPayment\Res
  */
 function _commerce_sbpayment_mode_options() {
   return array(
-    \Commerce\SBPayment\SBPayment::API_MODE_TEST => t('Test'),
-    \Commerce\SBPayment\SBPayment::API_MODE_LIVE => t('Live'),
+    SBPayment::API_MODE_TEST => t('Test'),
+    SBPayment::API_MODE_LIVE => t('Live'),
   );
 }
 
@@ -345,7 +350,7 @@ function _commerce_sbpayment_payment_method_options($payment_methods) {
   // Build an array of payment method names keyed by the machine name. Filtering
   // out any invalid methods.
   $payment_method_options = array_filter(array_map(function ($payment_method) {
-    return \Commerce\SBPayment\Payment\Methods::getPaymentMethodByMachineName($payment_method);
+    return Methods::getPaymentMethodByMachineName($payment_method);
   }, $payment_methods));
 
   // Allow other modules to alter the list of payment methods.

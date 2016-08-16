@@ -7,6 +7,7 @@
 
 namespace Commerce\SBPayment\Response;
 
+use Commerce\SBPayment\Product\ProductInterface;
 use Commerce\SBPayment\SBPaymentException;
 
 /**
@@ -68,7 +69,7 @@ abstract class Response {
    *
    * @var array
    */
-  private $data;
+  protected $data;
 
   /**
    * List of products that are being purchased.
@@ -76,6 +77,13 @@ abstract class Response {
    * @var SBPaymentProduct[]
    */
   protected $products = array();
+
+  /**
+   * The encryption key required to generate the checksum.
+   *
+   * @var string
+   */
+  protected $hashKey;
 
   /**
    * Result of this payment response.
@@ -90,13 +98,6 @@ abstract class Response {
    * @var string
    */
   private $message;
-
-  /**
-   * The encryption key required to generate the checksum.
-   *
-   * @var string
-   */
-  protected $hashKey;
 
   /**
    * Constructor.

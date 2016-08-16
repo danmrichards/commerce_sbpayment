@@ -83,7 +83,6 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
   }
   catch (SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);
-    drupal_set_message(t('A problem occurred when starting the SoftBank Payment Service. Please contact an administrator.'), 'error');
   }
 
   return (string) $sbpayment_response;
