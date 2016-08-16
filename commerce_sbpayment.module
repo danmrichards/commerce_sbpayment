@@ -44,7 +44,7 @@ function commerce_sbpayment_commerce_payment_method_info() {
 
     $payment_methods[$sbpayment_service_method_name] = array(
       'file' => 'includes/' . $sbpayment_service_method_name . '.payment.inc',
-      'title' => t('Commerce SoftBank Payment Service: @service_name', array('@service_name' => $sbpayment_service_name)),
+      'title' => t('SoftBank Payment Service'),
       'description' => t('Redirect users to submit payments through the SoftBank Payment Service: @service_name.', array('@service_name' => $sbpayment_service_name)),
       'active' => (commerce_default_currency() === 'JPY'),
       'terminal' => FALSE,
