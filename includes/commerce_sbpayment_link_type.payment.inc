@@ -9,6 +9,7 @@ use Commerce\SBPayment\SBPayment;
 use Commerce\SBPayment\SBPaymentException;
 use Commerce\SBPayment\Payment\Methods;
 use Commerce\SBPayment\Product\LinkTypeProduct;
+use Commerce\SBPayment\Util\Util;
 
 /**
  * Payment method callback: settings form.
@@ -195,7 +196,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'pay_method' => $order->data['softbank']['pay_method'],
       'merchant_id' => $payment_method['settings']['merchant_id'],
       'service_id' => $payment_method['settings']['service_id'],
-      'cust_code' => $order->uid == 0 ? $sbpayment_service::DUMMY_CUST_CODE : $order->uid,
+      'cust_code' => $order->uid == 0 ? Util::DUMMY_CUST_CODE : $order->uid,
       'order_id' => _commerce_sbpayment_prepare_order_number($order),
       'item_id' => $order->order_id,
       'item_name' => t('Order @order_number from @site_name', array(
@@ -221,31 +222,8 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
     // Build an array of SoftBank product objects for the current order.
     $sbpayment_products = array();
 
-    // Loop through the order contents.
-    $i = 1;
-    foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
-      // We only want to check products.
-      if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
-        // Ensure the product is valid.
-        if (isset($line_item_wrapper->commerce_product) && !is_null($line_item_wrapper->commerce_product->value())) {
-          // Load the product.
-          $product = commerce_product_load($line_item_wrapper->commerce_product->product_id->value());
-
-          // Prepare the product data.
-          // TODO: Add the tax component of the product price. Maybe only needed
-          // for bank transfers?
-          $sbpayment_products[] = new LinkTypeProduct(array(
-            'dtl_rowno' => $i,
-            'dtl_item_id' => $product->sku,
-            'dtl_item_name' => $product->title,
-            'dtl_item_count' => (int) $line_item_wrapper->quantity->value(),
-            'dtl_amount' => $line_item_wrapper->commerce_unit_price->amount->value(),
-          ));
-
-          ++$i;
-        }
-      }
-    }
+    // Prepare the order products.
+    $sbpayment_products = commerce_sbpayment_link_type_prepare_order_products($order_wrapper);
 
     // Set the payment fields and product on the service.
     $sbpayment_service->setPaymentData($payment_data);
@@ -389,115 +367,42 @@ function commerce_sbpayment_link_type_validate_settings($settings) {
 }
 
 /**
- * Generate a payment redirect form for a SoftBank payment service.
+ * Prepare products from an order for use with the SoftBank 'Link Type' service.
  *
- * @param \Commerce\SBPayment\SBPayment $sbpayment_service
- *   The payment service object with payment data set.
- * @param object $order
- *   A fully loaded commerce order object.
- * @param bool $debug
- *   Should debug information on the payment request be logged?
+ * @param EntityMetadataWrapper $order_wrapper
+ *   A wrapped commerce order entity.
  *
- * @return array
- *   A renderable Drupal form array.
+ * @return LinkTypeProduct[]
+ *   Array of link type products.
  */
-function commerce_sbpayment_service_order_form(SBPayment $sbpayment_service, $order, $debug = FALSE) {
-  $form = array();
+function commerce_sbpayment_link_type_prepare_order_products(EntityMetadataWrapper $order_wrapper) {
+  $sbpayment_products = array();
 
-  // Set the SoftBank service URL.
-  $form['#action'] = $sbpayment_service->getServiceUrl();
-
-  // Get the payment data from the service.
-  $payment_data = $sbpayment_service->getPaymentData();
-
-  // Allow other modules to alter the payment data.
-  $order_data = clone $order;
-  $sbpayment_service_name = (string) $sbpayment_service;
-  drupal_alter('commerce_sbpayment_service_order_form_data', $payment_data, $sbpayment_service_name, $order_data);
-
-  // Set the payment data fields.
-  foreach ($payment_data as $name => $value) {
-    $form[$name] = array('#type' => 'hidden', '#value' => $value);
-  }
-
-  // Set the product fields.
+  // Loop through the order contents.
   $i = 1;
-  foreach ($sbpayment_service->getProducts() as $product) {
-    foreach ($product->toArray() as $product_field => $product_data) {
-      $form[$product_field . '__' . $i] = array(
-        '#type' => 'hidden',
-        '#value' => $product_data,
-        '#pre_render' => array('commerce_sbpayment_service_product_pre_render'),
-      );
+  foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
+    // We only want to check products.
+    if (in_array($line_item_wrapper->type->value(), commerce_product_line_item_types())) {
+      // Ensure the product is valid.
+      if (isset($line_item_wrapper->commerce_product) && !is_null($line_item_wrapper->commerce_product->value())) {
+        // Load the product.
+        $product = commerce_product_load($line_item_wrapper->commerce_product->product_id->value());
+
+        // Prepare the product data.
+        // TODO: Add the tax component of the product price. Maybe only needed
+        // for bank transfers?
+        $sbpayment_products[] = new LinkTypeProduct(array(
+          'dtl_rowno' => $i,
+          'dtl_item_id' => $product->sku,
+          'dtl_item_name' => $product->title,
+          'dtl_item_count' => (int) $line_item_wrapper->quantity->value(),
+          'dtl_amount' => $line_item_wrapper->commerce_unit_price->amount->value(),
+        ));
+
+        ++$i;
+      }
     }
-    ++$i;
   }
 
-  // Add the request data and limit fields. They have to appear after the
-  // product detail fields.
-  $form['request_date'] = array(
-    '#type' => 'hidden',
-    '#value' => $sbpayment_service->getRequestDate(),
-  );
-  $form['limit_second'] = array(
-    '#type' => 'hidden',
-    '#value' => $sbpayment_service->getLimitSecond(),
-  );
-
-  // Add the checksum value.
-  $form['sps_hashcode'] = array(
-    '#type' => 'hidden',
-    '#value' => $sbpayment_service->getChecksum(),
-  );
-
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Proceed to SoftBank'),
-  );
-
-  $form['#pre_render'][] = 'commerce_sbpayment_service_order_form_pre_render';
-
-  // Log the debug data if required.
-  if ($debug === TRUE) {
-    watchdog('commerce_sbpayment', 'Payment request debug: <pre>!data</pre>', array(
-      '!data' => var_export($form, TRUE),
-    ));
-  }
-
-  return $form;
-}
-
-/**
- * Form element pre render callback.
- *
- * Tweak the name attribute of SoftBank product fields.
- *
- * @param array $element
- *   Product form field element.
- *
- * @return array
- *   Tweakedd product form field element.
- */
-function commerce_sbpayment_service_product_pre_render($element) {
-  // Remove the index from the element name. Workaround for limitation of how
-  // Drupal form arrays are built (no duplicate field names).
-  $element_name = explode('__', $element['#name']);
-  $element['#name'] = $element_name[0];
-
-  return $element;
-}
-
-/**
- * Form pre-render callback.
- *
- * Remove Drupal fields from a form (such as "form_token", "form_id" etc).
- * This needs to be done since SoftBank will generate a signature from submitted
- * data and will expect only those fields which described in API. Any other
- * data will lead to wrong signature of payment request.
- */
-function commerce_sbpayment_service_order_form_pre_render($form) {
-  unset($form['form_build_id']);
-  unset($form['form_id']);
-
-  return $form;
+  return $sbpayment_products;
 }

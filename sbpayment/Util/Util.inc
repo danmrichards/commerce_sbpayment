@@ -17,6 +17,27 @@ use Commerce\SBPayment\SBPaymentException;
 class Util {
 
   /**
+   * Payment field mandatory flag.
+   *
+   * @var string
+   */
+  const PAYMENT_FIELD_MANDATORY = 'mandatory';
+
+  /**
+   * Payment field optional flag.
+   *
+   * @var string
+   */
+  const PAYMENT_FIELD_OPTIONAL = 'optional';
+
+  /**
+   * Dummy customer code to use in the event of guest checkouts.
+   *
+   * @var string
+   */
+  const DUMMY_CUST_CODE = 'reg_sps000';
+
+  /**
    * Generate the current time in Japan.
    *
    * @param string $format
@@ -60,7 +81,7 @@ class Util {
     $checksum_string = mb_convert_encoding($checksum_string, 'UTF-8', 'SJIS');
 
     // Calculate the hash code.
-    return sha1($checksum_string);
+    return strtoupper(sha1($checksum_string));
   }
 
 }

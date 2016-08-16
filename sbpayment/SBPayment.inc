@@ -8,6 +8,7 @@
 namespace Commerce\SBPayment;
 
 use Commerce\SBPayment\Product\ProductInterface;
+use Commerce\SBPayment\Util\Util;
 
 /**
  * Abstract class for interacting with the SoftBank Payment Service.
@@ -27,27 +28,6 @@ abstract class SBPayment {
    * @var string
    */
   const API_MODE_LIVE = 'live';
-
-  /**
-   * Payment field mandatory flag.
-   *
-   * @var string
-   */
-  const PAYMENT_FIELD_MANDATORY = 'mandatory';
-
-  /**
-   * Payment field optional flag.
-   *
-   * @var string
-   */
-  const PAYMENT_FIELD_OPTIONAL = 'optional';
-
-  /**
-   * Dummy customer code to use in the event of guest checkouts.
-   *
-   * @var string
-   */
-  const DUMMY_CUST_CODE = 'reg_sps000';
 
   /**
    * What mode should the API be used in?
@@ -193,7 +173,7 @@ abstract class SBPayment {
 
     array_walk($payment_fields, function ($mandatory, $field_name) use (&$payment_data) {
       // Ensure the field has been populated if it is mandatory.
-      if ($mandatory === SBPayment::PAYMENT_FIELD_MANDATORY && !isset($payment_data[$field_name])) {
+      if ($mandatory === Util::PAYMENT_FIELD_MANDATORY && !isset($payment_data[$field_name])) {
         throw new SBPaymentException(sprintf('Mandatory payment field %s is not populated.', $field_name));
       }
 
@@ -251,8 +231,8 @@ abstract class SBPayment {
   /**
    * Get the PHP class name of the notification handler for this service.
    *
-   * The class must implement the Commerce\SBPayment\Response\ResponseInterface
-   * interface.
+   * The class must extend the Commerce\SBPayment\Response\Response abstract
+   * class.
    *
    * @return string
    *   PHP class name.
@@ -262,8 +242,8 @@ abstract class SBPayment {
   /**
    * Get the PHP class name of the notification handler for this service.
    *
-   * The class must implement the Commerce\SBPayment\Response\ResponseInterface
-   * interface.
+   * The class must extend the Commerce\SBPayment\Response\Response abstract
+   * class.
    *
    * @return string
    *   PHP class name.
@@ -271,12 +251,12 @@ abstract class SBPayment {
   public abstract function getResultHandler();
 
   /**
-   * Get an associatvie array of the fields required to create a payment.
+   * Get an associative array of the fields required to create a payment.
    *
    * @return string[]
    *   Array of field names required to create a payment. Array in the
    *   format 'machine_name => required', where required is either
-   *   'mandatory' or 'required' as defined in this class constants.
+   *   'mandatory' or 'required' as defined in the util class constants.
    */
   public abstract function getPaymentFields();
 

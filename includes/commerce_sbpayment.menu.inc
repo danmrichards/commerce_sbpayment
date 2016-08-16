@@ -23,6 +23,9 @@ use Commerce\SBPayment\SBPaymentException;
  * @see commerce_sbpayment_services()
  */
 function commerce_sbpayment_notification_controller($sbpayment_service_name, $order_id, $payment_redirect_key) {
+  // Load the relevant payment file include for this service.
+  module_load_include('inc', 'commerce_sbpayment', 'includes/commerce_sbpayment_' . $sbpayment_service_name . '.payment');
+
   // Load the payment method instance.
   $payment_method_id = sprintf('%s_%s', COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE, $sbpayment_service_name);
   $payment_method_instance_id = sprintf('%s|commerce_payment_%s', $payment_method_id, $payment_method_id);
@@ -43,7 +46,10 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
 
   try {
     // Attempt the create the response object.
-    $sbpayment_response = new $sbpayment_response_class();
+    $sbpayment_response = new $sbpayment_response_class($_POST);
+
+    // Set the hash key.
+    $sbpayment_response->setHashKey($sbpayment_method['settings']['hash_key']);
 
     // Load the order and check it is valid.
     $order = commerce_order_load($order_id);
@@ -56,10 +62,24 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
       return $sbpayment_response::RESPONSE_FAIL . ', Invalid payment redirect key';
     }
 
-    $sbpayment_response->setResponseData($_POST);
+    // Build the product preparation callback name.
+    $product_prepare_callback = 'commerce_sbpayment_' . $sbpayment_service_name . '_prepare_order_products';
 
-    // Create the drupal transaction.
-    commerce_sbpayment_transaction($sbpayment_method, $sbpayment_response, $order);
+    // Prepare the order products if the function exists.
+    if (function_exists($product_prepare_callback)) {
+      // Load the products.
+      $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+      $sbpayment_products = $product_prepare_callback($order_wrapper);
+
+      // Set the products on the response object.
+      $sbpayment_response->setProducts($sbpayment_products);
+    }
+
+    // Verify the response data.
+    if ($sbpayment_response->verify() === TRUE) {
+      // Create the drupal transaction.
+      commerce_sbpayment_transaction($sbpayment_method, $sbpayment_response, $order);
+    }
   }
   catch (SBPaymentException $e) {
     watchdog_exception('commerce_sbpayment', $e);

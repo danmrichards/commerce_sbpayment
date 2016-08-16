@@ -137,6 +137,120 @@ function commerce_sbpayment_get_service_object($machine_name) {
 }
 
 /**
+ * Generate a payment redirect form for a SoftBank payment service.
+ *
+ * @param \Commerce\SBPayment\SBPayment $sbpayment_service
+ *   The payment service object with payment data set.
+ * @param object $order
+ *   A fully loaded commerce order object.
+ * @param bool $debug
+ *   Should debug information on the payment request be logged?
+ *
+ * @return array
+ *   A renderable Drupal form array.
+ */
+function commerce_sbpayment_service_order_form(SBPayment $sbpayment_service, $order, $debug = FALSE) {
+  $form = array();
+
+  // Set the SoftBank service URL.
+  $form['#action'] = $sbpayment_service->getServiceUrl();
+
+  // Get the payment data from the service.
+  $payment_data = $sbpayment_service->getPaymentData();
+
+  // Allow other modules to alter the payment data.
+  $order_data = clone $order;
+  $sbpayment_service_name = (string) $sbpayment_service;
+  drupal_alter('commerce_sbpayment_service_order_form_data', $payment_data, $sbpayment_service_name, $order_data);
+
+  // Set the payment data fields.
+  foreach ($payment_data as $name => $value) {
+    $form[$name] = array('#type' => 'hidden', '#value' => $value);
+  }
+
+  // Set the product fields.
+  $i = 1;
+  foreach ($sbpayment_service->getProducts() as $product) {
+    foreach ($product->toArray() as $product_field => $product_data) {
+      $form[$product_field . '__' . $i] = array(
+        '#type' => 'hidden',
+        '#value' => $product_data,
+        '#pre_render' => array('commerce_sbpayment_service_product_pre_render'),
+      );
+    }
+    ++$i;
+  }
+
+  // Add the request data and limit fields. They have to appear after the
+  // product detail fields.
+  $form['request_date'] = array(
+    '#type' => 'hidden',
+    '#value' => $sbpayment_service->getRequestDate(),
+  );
+  $form['limit_second'] = array(
+    '#type' => 'hidden',
+    '#value' => $sbpayment_service->getLimitSecond(),
+  );
+
+  // Add the checksum value.
+  $form['sps_hashcode'] = array(
+    '#type' => 'hidden',
+    '#value' => $sbpayment_service->getChecksum(),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed to SoftBank'),
+  );
+
+  $form['#pre_render'][] = 'commerce_sbpayment_service_order_form_pre_render';
+
+  // Log the debug data if required.
+  if ($debug === TRUE) {
+    watchdog('commerce_sbpayment', 'Payment request debug: <pre>!data</pre>', array(
+      '!data' => var_export($form, TRUE),
+    ));
+  }
+
+  return $form;
+}
+
+/**
+ * Form element pre render callback.
+ *
+ * Tweak the name attribute of SoftBank product fields.
+ *
+ * @param array $element
+ *   Product form field element.
+ *
+ * @return array
+ *   Tweakedd product form field element.
+ */
+function commerce_sbpayment_service_product_pre_render($element) {
+  // Remove the index from the element name. Workaround for limitation of how
+  // Drupal form arrays are built (no duplicate field names).
+  $element_name = explode('__', $element['#name']);
+  $element['#name'] = $element_name[0];
+
+  return $element;
+}
+
+/**
+ * Form pre-render callback.
+ *
+ * Remove Drupal fields from a form (such as "form_token", "form_id" etc).
+ * This needs to be done since SoftBank will generate a signature from submitted
+ * data and will expect only those fields which described in API. Any other
+ * data will lead to wrong signature of payment request.
+ */
+function commerce_sbpayment_service_order_form_pre_render($form) {
+  unset($form['form_build_id']);
+  unset($form['form_id']);
+
+  return $form;
+}
+
+/**
  * Creates/Updates a commerce payment transaction based on SoftBank data.
  *
  * @param array $payment_method
