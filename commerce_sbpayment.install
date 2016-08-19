@@ -32,12 +32,3 @@ function commerce_sbpayment_requirements($phase) {
 
   return $requirements;
 }
-
-/**
- * Implements hook_enable().
- */
-function commerce_sbpayment_enable() {
-  // Ensure all caches are cleared as the autoload cache may not yet contain
-  // the classes we need in this module.
-  drupal_flush_all_caches();
-}

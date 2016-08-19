@@ -11,11 +11,6 @@
 class CommerceSBPaymentUI extends CommerceBaseTestCase {
 
   /**
-   * Don't need most of default core modules.
-   */
-  protected $profile = 'minimal';
-
-  /**
    * A custom site name for testing purposes.
    *
    * @var string
@@ -34,14 +29,14 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    *
    * @var object
    */
-  protected $store_admin;
+  protected $storeAdmin;
 
   /**
    * Customer user account for testing.
    *
    * @var object
    */
-  protected $store_customer;
+  protected $storeCustomer;
 
   /**
    * {@inheritdoc}
@@ -65,8 +60,8 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     parent::setUp($modules);
 
     // User creation for different operations.
-    $this->store_admin = $this->createStoreAdmin();
-    $this->store_customer = $this->createStoreCustomer();
+    $this->storeAdmin = $this->createStoreAdmin();
+    $this->storeCustomer = $this->createStoreCustomer();
 
     // Enable Japanese Yen and US Dollars.
     $this->enableCurrencies(array('JPY', 'USD'));
@@ -147,7 +142,7 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    * Test the payment on checkout process using an authenticated user.
    */
   public function testCommerceSbPaymentCheckoutProcess() {
-    $this->createOrderAndGoToPayment($this->store_customer, $this->product);
+    $this->createOrderAndGoToPayment($this->storeCustomer, $this->product);
 
     // Check the payment pane is present.
     $this->assertText(t('SoftBank Payment Service'), t('SoftBank payment service pane is present'));
