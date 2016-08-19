@@ -196,7 +196,7 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'pay_method' => $order->data['softbank']['pay_method'],
       'merchant_id' => $payment_method['settings']['merchant_id'],
       'service_id' => $payment_method['settings']['service_id'],
-      'cust_code' => $order->uid == 0 ? Util::DUMMY_CUST_CODE : $order->uid,
+      'cust_code' => $order->uid == 0 ? Util::DUMMY_CUST_CODE . $order->order_id : $order->uid,
       'order_id' => _commerce_sbpayment_prepare_order_number($order),
       'item_id' => $order->order_id,
       'item_name' => t('Order @order_number from @site_name', array(

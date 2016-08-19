@@ -35,7 +35,7 @@ class Util {
    *
    * @var string
    */
-  const DUMMY_CUST_CODE = 'reg_sps000';
+  const DUMMY_CUST_CODE = 'reg_sps';
 
   /**
    * Generate the current time in Japan.

@@ -36,6 +36,8 @@ function hook_commerce_sbpayment_payment_method_options_alter(&$payment_method_o
  */
 function hook_commerce_sbpayment_service_order_form_data_alter(&$payment_data, $sbpayment_service_name, $order) {
   if ($sbpayment_service_name == 'link_type') {
-    $payment_data['sps_cust_no'] = 'CUST' . $order->uid;
+    $payment_data['item_name'] = t('This awesome order came from the awesome site: @site_name', array(
+      '@site_name' => variable_get('site_name', 'Drupal'),
+    ));
   }
 }
