@@ -39,6 +39,13 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
   protected $storeCustomer;
 
   /**
+   * Order object.
+   *
+   * @var object
+   */
+  protected $order;
+
+  /**
    * {@inheritdoc}
    */
   public static function getInfo() {
@@ -53,10 +60,16 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    * {@inheritdoc}
    */
   protected function setUp() {
-    // Enable all commerce modules & commerce_sbpayment.
+    // Get the list of commerce modules to enable.
     $modules = parent::setUpHelper('all');
-    $modules[] = 'commerce_sbpayment';
 
+    // We don't need the example payment module.
+    $key = array_search('commerce_payment_example', $modules);
+    if (FALSE !== $key) {
+      unset($modules[$key]);
+    }
+
+    // Enable the commerce modules.
     parent::setUp($modules);
 
     // User creation for different operations.
@@ -77,6 +90,13 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
 
     // Set the default country to Japan.
     variable_set('site_default_country', 'JP');
+
+    // Enable Commerce Smartpay.
+    $success = module_enable(array('commerce_sbpayment'), TRUE);
+    $this->assertTrue($success, t('Enabled the Commerce SoftBank Payment Service module.'));
+
+    // Reset caches.
+    $this->resetAll();
   }
 
   /**
@@ -96,7 +116,7 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    * Create a dummy order and go to checkout payment page.
    */
   protected function createOrderAndGoToPayment($user = NULL, $products = array()) {
-    // Log in as normal user if present.
+    // Log in if we have a valid user object.
     if (!is_null($user)) {
       $this->drupalLogin($user);
     }
@@ -142,7 +162,8 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    * Test the payment on checkout process using an authenticated user.
    */
   public function testCommerceSbPaymentCheckoutProcess() {
-    $this->createOrderAndGoToPayment($this->storeCustomer, $this->product);
+    // Create a test order for our user and product.
+    $this->createOrderAndGoToPayment($this->storeCustomer, array($this->product->product_id => 1));
 
     // Check the payment pane is present.
     $this->assertText(t('SoftBank Payment Service'), t('SoftBank payment service pane is present'));
