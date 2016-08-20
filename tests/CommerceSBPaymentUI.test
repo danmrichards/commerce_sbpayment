@@ -11,6 +11,11 @@
 class CommerceSBPaymentUI extends CommerceBaseTestCase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $profile = 'testing';
+
+  /**
    * A custom site name for testing purposes.
    *
    * @var string
@@ -55,6 +60,31 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
       'group' => 'Commerce SoftBank Payment Service',
     );
   }
+
+  // TODO: Test API functionality: Checksum generation, request generaton and
+  // response verification.
+
+  // TODO: Test payment method administration.
+
+  /**
+   * Test the payment on checkout process using an authenticated user.
+   */
+  public function testCommerceSbPaymentCheckoutProcess() {
+    // Create a test order for our user and product.
+    $this->createOrderAndGoToPayment($this->storeCustomer, array($this->product->product_id => 1));
+
+    // Check the payment pane is present.
+    $this->assertText(t('SoftBank Payment Service'), t('SoftBank payment service pane is present'));
+
+    // TODO: Check the SoftBank payment options pane is present.
+
+    // Finish checkout process. We can't really test past this point as we get
+    // redirected off to SoftBank.
+    $this->drupalPost(NULL, array(), t('Continue to next step'));
+    $this->assertFieldById('edit-submit', t('Proceed to SoftBank'), t('Redirection button to SoftBank is present'));
+  }
+
+  // TODO: Test checkout process with incorrect default currencies.
 
   /**
    * {@inheritdoc}
@@ -158,29 +188,9 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     $this->assertTitle(t('Review order | @site_name', array('@site_name' => $this->siteName)), t('Review order page successfully loaded'));
   }
 
-  // TODO: Test API functionality: Checksum generation, request generaton and
-  // response verification.
-
-  // TODO: Test payment method administration.
-
   /**
-   * Test the payment on checkout process using an authenticated user.
+   * Configure the payment method rule for SoftBank.
    */
-  public function testCommerceSbPaymentCheckoutProcess() {
-    // Create a test order for our user and product.
-    $this->createOrderAndGoToPayment($this->storeCustomer, array($this->product->product_id => 1));
-
-    // Check the payment pane is present.
-    $this->assertText(t('SoftBank Payment Service'), t('SoftBank payment service pane is present'));
-
-    // TODO: Check the SoftBank payment options pane is present.
-
-    // Finish checkout process. We can't really test past this point as we get
-    // redirected off to SoftBank.
-    $this->drupalPost(NULL, array(), t('Continue to next step'));
-    $this->assertFieldById('edit-submit', t('Proceed to SoftBank'), t('Redirection button to SoftBank is present'));
-  }
-
-  // TODO: Test checkout process with incorrect default currencies.
+  protected function configureSoftBankPaymentMethod() {}
 
 }
