@@ -5,15 +5,13 @@
  * Contains CommerceSBPaymentUI.
  */
 
+use Commerce\SBPayment\SBPayment;
+use Commerce\SBPayment\Payment\Methods;
+
 /**
  * Defines a class for testing the Commerce SoftBank Payment Service UI.
  */
 class CommerceSBPaymentUI extends CommerceBaseTestCase {
-
-  /**
-   * {@inheritdoc}
-   */
-  protected $profile = 'testing';
 
   /**
    * A custom site name for testing purposes.
@@ -51,6 +49,23 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
   protected $order;
 
   /**
+   * Payment method settings for the link type service.
+   *
+   * @var array
+   */
+  protected $linkTypeSettings = array(
+    'mode' => SBPayment::API_MODE_TEST,
+    'pay_methods' => array(
+      'credit' => 'credit',
+      'docomo' => 'docomo',
+    ),
+    'merchant_id' => 'TEST123',
+    'service_id' => '001',
+    'hash_key' => 't7e06iyq5opmhcf1ekw0',
+    'debug' => 0,
+  );
+
+  /**
    * {@inheritdoc}
    */
   public static function getInfo() {
@@ -61,35 +76,10 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     );
   }
 
-  // TODO: Test API functionality: Checksum generation, request generaton and
-  // response verification.
-
-  // TODO: Test payment method administration.
-
-  /**
-   * Test the payment on checkout process using an authenticated user.
-   */
-  public function testCommerceSbPaymentCheckoutProcess() {
-    // Create a test order for our user and product.
-    $this->createOrderAndGoToPayment($this->storeCustomer, array($this->product->product_id => 1));
-
-    // Check the payment pane is present.
-    $this->assertText(t('SoftBank Payment Service'), t('SoftBank payment service pane is present'));
-
-    // TODO: Check the SoftBank payment options pane is present.
-
-    // Finish checkout process. We can't really test past this point as we get
-    // redirected off to SoftBank.
-    $this->drupalPost(NULL, array(), t('Continue to next step'));
-    $this->assertFieldById('edit-submit', t('Proceed to SoftBank'), t('Redirection button to SoftBank is present'));
-  }
-
-  // TODO: Test checkout process with incorrect default currencies.
-
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  public function setUp() {
     // Get the list of commerce modules to enable.
     $modules = parent::setUpHelper('all');
 
@@ -128,8 +118,42 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     // Reset caches.
     $this->resetAll();
 
-    // TODO: Configure the payment method settings.
+    // Configure the payment method settings.
+    $this->configureSoftBankPaymentMethod('commerce_sbpayment_link_type', $this->linkTypeSettings);
   }
+
+  // TODO: Test API functionality: Checksum generation, request generaton and
+  // response verification.
+
+  // TODO: Test payment method administration.
+
+  /**
+   * Test the payment on checkout process using an authenticated user.
+   */
+  public function testCommerceSbPaymentCheckoutProcess() {
+    // Create a test order for our user and product.
+    $this->createOrderAndGoToPayment($this->storeCustomer, array($this->product->product_id => 1));
+
+    // Check the payment pane is present.
+    $this->assertText(t('SoftBank Payment Service'), t('SoftBank payment service pane is present'));
+
+    // Check the SoftBank payment options pane is present with all enabled
+    // pay method options.
+    foreach ($this->linkTypeSettings['pay_methods'] as $pay_method) {
+      $this->assertFieldByName('commerce_payment[payment_details][softbank_pay_method]', $pay_method, t('Radio button present for @pay_method', array('@pay_method' => Methods::getPaymentMethodByMachineName($pay_method))));
+    }
+
+    $pay_method_choice = array(
+      'commerce_payment[payment_details][softbank_pay_method]' => 'credit',
+    );
+
+    // Finish checkout process. We can't really test past this point as we get
+    // redirected off to SoftBank.
+    $this->drupalPost(NULL, $pay_method_choice, t('Continue to next step'));
+    $this->assertFieldById('edit-submit', t('Proceed to SoftBank'), t('Redirection button to SoftBank is present'));
+  }
+
+  // TODO: Test checkout process with incorrect default currencies.
 
   /**
    * Generate random valid information for Address information.
@@ -190,7 +214,38 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
 
   /**
    * Configure the payment method rule for SoftBank.
+   *
+   * @param string $payment_method_id
+   *   The commerce payment method ID.
+   * @param array $settings
+   *   Settings for the payment method.
    */
-  protected function configureSoftBankPaymentMethod() {}
+  protected function configureSoftBankPaymentMethod($payment_method_id, $settings = array()) {
+    // Load the payment method rule config.
+    $rule_config = rules_config_load("commerce_payment_{$payment_method_id}");
+
+    if (!empty($rule_config)) {
+      foreach ($rule_config->actions() as $action) {
+        if (!empty($action->settings['payment_method']) && "commerce_payment_enable_{$payment_method_id}" === $action->getElementName()) {
+          // During initialization of action the "payment_method" key will
+          // contain the method ID.
+          if (!is_array($action->settings['payment_method'])) {
+            $action->settings['payment_method'] = array();
+          }
+
+          // Ensure that we have an array in "settings" key.
+          $action->settings['payment_method'] += array('settings' => array());
+
+          // Set the payment method ID.
+          $action->settings['payment_method']['method_id'] = $payment_method_id;
+
+          // Override any supplied payment method settings.
+          $action->settings['payment_method']['settings'] = array_merge($action->settings['payment_method']['settings'], $settings);
+        }
+      }
+
+      $rule_config->save();
+    }
+  }
 
 }
