@@ -5,9 +5,6 @@
  * Contains CommerceSBPaymentUI.
  */
 
-use Commerce\SBPayment\SBPayment;
-use Commerce\SBPayment\Payment\Methods;
-
 /**
  * Defines a class for testing the Commerce SoftBank Payment Service UI.
  */
@@ -54,7 +51,7 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    * @var array
    */
   protected $linkTypeSettings = array(
-    'mode' => SBPayment::API_MODE_TEST,
+    'mode' => 'test',
     'pay_methods' => array(
       'credit' => 'credit',
       'docomo' => 'docomo',
@@ -63,6 +60,16 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     'service_id' => '001',
     'hash_key' => 't7e06iyq5opmhcf1ekw0',
     'debug' => 0,
+  );
+
+  /**
+   * Example payment methods keyed by machine name.
+   *
+   * @var array
+   */
+  protected $paymentMethods = array(
+    'credit' => 'Credit card payment',
+    'docomo' => 'Docomo Keitai Barai',
   );
 
   /**
@@ -140,7 +147,7 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     // Check the SoftBank payment options pane is present with all enabled
     // pay method options.
     foreach ($this->linkTypeSettings['pay_methods'] as $pay_method) {
-      $this->assertFieldByName('commerce_payment[payment_details][softbank_pay_method]', $pay_method, t('Radio button present for @pay_method', array('@pay_method' => Methods::getPaymentMethodByMachineName($pay_method))));
+      $this->assertFieldByName('commerce_payment[payment_details][softbank_pay_method]', $pay_method, t('Radio button present for @pay_method', array('@pay_method' => $this->paymentMethods[$pay_method])));
     }
 
     $pay_method_choice = array(
