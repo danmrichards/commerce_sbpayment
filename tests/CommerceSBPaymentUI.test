@@ -97,6 +97,8 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
 
     // Reset caches.
     $this->resetAll();
+
+    // TODO: Configure the payment method settings.
   }
 
   /**
@@ -156,6 +158,9 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     $this->assertTitle(t('Review order | @site_name', array('@site_name' => $this->siteName)), t('Review order page successfully loaded'));
   }
 
+  // TODO: Test API functionality: Checksum generation, request generaton and
+  // response verification.
+
   // TODO: Test payment method administration.
 
   /**
@@ -173,10 +178,9 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     // Finish checkout process. We can't really test past this point as we get
     // redirected off to SoftBank.
     $this->drupalPost(NULL, array(), t('Continue to next step'));
+    $this->assertFieldById('edit-submit', t('Proceed to SoftBank'), t('Redirection button to SoftBank is present'));
   }
 
-  // TODO: Test the payment on checkout process using an anonymous user.
-
-  // TODO: Test checkout process with correct and incorrect default currencies.
+  // TODO: Test checkout process with incorrect default currencies.
 
 }
