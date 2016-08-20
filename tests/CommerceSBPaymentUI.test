@@ -99,31 +99,33 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     // Enable the commerce modules.
     parent::setUp($modules);
 
-    // User creation for different operations.
-    $this->storeAdmin = $this->createStoreAdmin();
-    $this->storeCustomer = $this->createStoreCustomer();
-
     // Enable Japanese Yen and US Dollars.
     $this->enableCurrencies(array('JPY', 'USD'));
-
-    // Create a dummy product.
-    $this->product = $this->createDummyProduct('PROD-01', 'Product One', 1000, 'JPY');
-
-    // Set the site name.
-    variable_set('site_name', $this->siteName);
 
     // Set the default currency to Japanese Yen.
     variable_set('commerce_default_currency', 'JPY');
 
-    // Set the default country to Japan.
-    variable_set('site_default_country', 'JP');
-
-    // Enable Commerce Smartpay.
+    // Enable Commerce SoftBank. Note we're doing this after the other modules
+    // and default currency change. This is to ensure the hook_requirements
+    // conditions of the module are met.
     $success = module_enable(array('commerce_sbpayment'), TRUE);
     $this->assertTrue($success, t('Enabled the Commerce SoftBank Payment Service module.'));
 
     // Reset caches.
     $this->resetAll();
+
+    // Set the site name.
+    variable_set('site_name', $this->siteName);
+
+    // Set the default country to Japan.
+    variable_set('site_default_country', 'JP');
+
+    // User creation for different operations.
+    $this->storeAdmin = $this->createStoreAdmin();
+    $this->storeCustomer = $this->createStoreCustomer();
+
+    // Create a dummy product.
+    $this->product = $this->createDummyProduct('PROD-01', 'Product One', 1000, 'JPY');
 
     // Configure the payment method settings.
     $this->configureSoftBankPaymentMethod('commerce_sbpayment_link_type', $this->linkTypeSettings);
@@ -179,13 +181,14 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
    * Create a dummy order and go to checkout payment page.
    */
   protected function createOrderAndGoToPayment($user = NULL, $products = array()) {
-    // Log in if we have a valid user object.
-    if (!is_null($user)) {
-      $this->drupalLogin($user);
+    if (empty($user)) {
+      $user = $this->storeCustomer;
     }
 
+    $this->drupalLogin($user);
+
     // Order creation, in cart status.
-    $this->order = $this->createDummyOrder(!is_null($user) ? $user->uid : 0, $products);
+    $this->order = $this->createDummyOrder($user->uid, $products);
 
     // Go to checkout page.
     $this->drupalGet($this->getCommerceUrl('checkout'));
