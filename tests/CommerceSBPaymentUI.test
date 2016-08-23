@@ -127,6 +127,9 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     // Create a dummy product.
     $this->product = $this->createDummyProduct('PROD-01', 'Product One', 1000, 'JPY');
 
+    // Create a dummy product with an invalid currency.
+    $this->invalidProduct = $this->createDummyProduct('PROD-02', 'Product Two', 100, 'USD');
+
     // Configure the payment method settings.
     $this->configureSoftBankPaymentMethod('commerce_sbpayment_link_type', $this->linkTypeSettings);
   }
@@ -162,7 +165,21 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     $this->assertFieldById('edit-submit', t('Proceed to SoftBank'), t('Redirection button to SoftBank is present'));
   }
 
-  // TODO: Test checkout process with incorrect default currencies.
+  /**
+   * Test checkout process with an incorrect currency.
+   */
+  public function testInvalidCurrencyCheckoutProcess() {
+    // Create a test order for our user and product.
+    $this->createOrderAndGoToPayment($this->storeCustomer, array($this->invalidProduct->product_id => 1));
+
+    // Check the SoftBank payment options pane is not present.
+    foreach ($this->linkTypeSettings['pay_methods'] as $pay_method) {
+      $this->assertNoFieldByName('commerce_payment[payment_details][softbank_pay_method]', $pay_method, t('Radio button not present for @pay_method', array('@pay_method' => $this->paymentMethods[$pay_method])));
+    }
+
+    // Check the error message is present.
+    $this->assertText(t('Your order is not in a currency supported by SoftBank. Please contact an administrator.'), t('Invalid currency error is displayed'));
+  }
 
   /**
    * Generate random valid information for Address information.

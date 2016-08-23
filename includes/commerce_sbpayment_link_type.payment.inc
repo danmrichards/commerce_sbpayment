@@ -112,6 +112,18 @@ function commerce_sbpayment_link_type_submit_form($payment_method, $pane_values,
     return array();
   }
 
+  // Load the order wrapper.
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  // Get the order total.
+  $order_total = $order_wrapper->commerce_order_total->value();
+
+  // Ensure the order total is in JPY.
+  if ($order_total['currency_code'] != 'JPY') {
+    drupal_set_message(t('Your order is not in a currency supported by SoftBank. Please contact an administrator.'), 'error');
+    return array();
+  }
+
   $form = array();
 
   // Add the SoftBank payment methods selector.
