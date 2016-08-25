@@ -5,6 +5,10 @@
  * Contains CommerceSBPaymentUI.
  */
 
+use Commerce\SBPayment\SBPayment;
+use Commerce\SBPayment\Util\Util;
+use Commerce\SBPayment\Product\LinkTypeProduct;
+
 /**
  * Defines a class for testing the Commerce SoftBank Payment Service UI.
  */
@@ -73,6 +77,13 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
   );
 
   /**
+   * Machine name of the SoftBank service we're testing.
+   *
+   * @var string
+   */
+  protected $serviceName = 'link_type';
+
+  /**
    * {@inheritdoc}
    */
   public static function getInfo() {
@@ -131,13 +142,93 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
     $this->invalidProduct = $this->createDummyProduct('PROD-02', 'Product Two', 100, 'USD');
 
     // Configure the payment method settings.
-    $this->configureSoftBankPaymentMethod('commerce_sbpayment_link_type', $this->linkTypeSettings);
+    $this->configureSoftBankPaymentMethod('commerce_sbpayment_' . $this->serviceName, $this->linkTypeSettings);
   }
 
-  // TODO: Test API functionality: Checksum generation, request generaton and
-  // response verification.
+  /**
+   * Validate the SoftBank API interaction.
+   */
+  public function testCommerceSbPaymentApi() {
+    // Load the payment method instance.
+    $payment_method_id = sprintf('%s_%s', COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE, $this->serviceName);
+    $payment_method_instance_id = sprintf('%s|commerce_payment_%s', $payment_method_id, $payment_method_id);
+    $sbpayment_method = commerce_payment_method_instance_load($payment_method_instance_id);
 
-  // TODO: Test payment method administration.
+    // Get the payment service object.
+    $sbpayment_service_machine_name = str_replace(COMMERCE_SBPAYMENT_PAYMENT_METHOD_BASE . '_', '', $this->serviceName);
+    $sbpayment_service = commerce_sbpayment_get_service_object($sbpayment_service_machine_name);
+
+    // Set the gateway mode and encryption hash key.
+    $sbpayment_service->setMode($this->linkTypeSettings['mode']);
+    $sbpayment_service->setHashKey($this->linkTypeSettings['hash_key']);
+
+    // Prepare the data required by the payment service.
+    $payment_data = array(
+      'pay_method' => 'credit',
+      'merchant_id' => $this->linkTypeSettings['merchant_id'],
+      'service_id' => $this->linkTypeSettings['service_id'],
+      'cust_code' => '1234',
+      'order_id' => '2345',
+      'item_id' => 2345,
+      'item_name' => t('Order @order_number from @site_name', array(
+        '@order_number' => '2345',
+        '@site_name' => variable_get('site_name', 'Drupal'),
+      )),
+      'tax' => '',
+      'amount' => 100,
+      'pay_type' => 0,
+      'service_type' => 0,
+      'terminal_type' => 0,
+      'success_url' => url('checkout/2345/payment/return/example_redirect_key', array('absolute' => TRUE)),
+      'cancel_url' => url('checkout/2345/payment/back/example_redirect_key', array('absolute' => TRUE)),
+      'error_url' => url('checkout/2345/payment/return/example_redirect_key', array('absolute' => TRUE)),
+      'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $this->serviceName . '/2345/example_redirect_key', array('absolute' => TRUE)),
+    );
+
+    // Build an array of SoftBank product objects for the current order.
+    $sbpayment_products = array();
+    $sbpayment_products[] = new LinkTypeProduct(array(
+      'dtl_rowno' => 1,
+      'dtl_item_id' => 'PROD-01',
+      'dtl_item_name' => 'Test Product',
+      'dtl_item_count' => 1,
+      'dtl_amount' => 'Product One',
+    ));
+
+    // Set the payment fields and product on the service.
+    $sbpayment_service->setPaymentData($payment_data);
+    $sbpayment_service->setProducts($sbpayment_products);
+
+    // Test the the expected checksum is generated.
+    $this->assertEqual($this->generateTestChecksum($sbpayment_service, $this->linkTypeSettings['hash_key']), $sbpayment_service->getChecksum(), t('Checksum generation OK.'));
+  }
+
+  /**
+   * Test payment method administration.
+   */
+  public function testCommerceSbPaymentAdministration() {
+    // Log in as store administrator user.
+    $this->drupalLogin($this->storeAdmin);
+
+    // Go to payment methods page.
+    $this->drupalGet('admin/commerce/config/payment-methods');
+
+    $this->assertTitle(t('Payment methods | @site_name', array('@site_name' => $this->siteName)), t('We are now in the payment methods page'));
+    $this->assertText(t('SoftBank Payment Service'), t('SoftBank Payment rule is present'));
+
+    // Go to edit SoftBank payment rule.
+    $this->clickLink(t('SoftBank Payment Service'));
+
+    // Go the enable payment action.
+    $this->clickLink(t('Enable payment method: SoftBank Payment Service'));
+
+    // Check the expected fields are on the rule action.
+    foreach ($this->linkTypeSettings as $field_name => $value) {
+      $field_id = 'edit-parameter-payment-method-settings-payment-method-settings-' . str_replace('_', '-', $field_name);
+      $element = is_array($value) ? 'select' : 'input';
+      $this->assertFieldByXPath("//{$element}[starts-with(@id, '{$field_id}')]", NULL, t('Payment method field @field_name exists. Tested with ID @id', array('@field_name' => $field_name, '@id' => $field_id)));
+    }
+  }
 
   /**
    * Test the payment on checkout process using an authenticated user.
@@ -273,6 +364,37 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
 
       $rule_config->save();
     }
+  }
+
+  /**
+   * Generate a test checksum based on payment and product data.
+   *
+   * @param \Commerce\SBPayment\SBPayment $sbpayment_service
+   *   The payment service object with payment data set.
+   * @param string $hash_key
+   *   Hash key assigned by SoftBank for the merchant account.
+   *
+   * @return string
+   *   The generated hashkey.
+   */
+  protected function generateTestChecksum(SBPayment $sbpayment_service, $hash_key) {
+    $checksum_data = $sbpayment_service->getPaymentData();
+
+    // Append the data for each product.
+    $i = 1;
+    foreach ($sbpayment_service->getProducts() as $product) {
+      foreach ($product->toArray() as $product_field => $product_data) {
+        $checksum_data[$product_field . '__' . $i] = $product_data;
+      }
+      ++$i;
+    }
+
+    // Add the final details.
+    $checksum_data['request_date'] = $sbpayment_service->getRequestDate();
+    $checksum_data['limit_second'] = $sbpayment_service->getLimitSecond();
+
+    // Generate the hash code.
+    return Util::generateSpsHashcode($checksum_data, $hash_key);
   }
 
 }
