@@ -138,7 +138,7 @@ abstract class SBPayment {
    */
   public function getBaseUrl() {
     // Determine the protocol we're using.
-    $protocol = $this->https === TRUE ? 'https' : 'http';
+    $protocol = $this->https ? 'https' : 'http';
 
     return sprintf('%s://%s', $protocol, $this->baseUrls[$this->mode]);
   }

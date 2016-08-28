@@ -16,7 +16,7 @@
  * @see commerce_sbpayment_submit_form()
  * @see commerce_payment_pane_checkout_form()
  */
-function hook_commerce_sbpayment_payment_method_options_alter(&$payment_method_options) {
+function hook_commerce_sbpayment_payment_method_options_alter(array &$payment_method_options) {
   // Combine mobile based payment options into one.
   $payment_method_options['docomo,auone,softbank2'] = t('Pay by Mobile (Docomo, AU, SoftBank)');
   unset($payment_method_options['docomo']);
@@ -34,7 +34,7 @@ function hook_commerce_sbpayment_payment_method_options_alter(&$payment_method_o
  * @param object $order
  *   A fully loaded Drupal commerce order object.
  */
-function hook_commerce_sbpayment_service_order_form_data_alter(&$payment_data, $sbpayment_service_name, $order) {
+function hook_commerce_sbpayment_service_order_form_data_alter(array &$payment_data, $sbpayment_service_name, stdClass $order) {
   if ($sbpayment_service_name == 'link_type') {
     $payment_data['item_name'] = t('This awesome order came from the awesome site: @site_name', array(
       '@site_name' => variable_get('site_name', 'Drupal'),

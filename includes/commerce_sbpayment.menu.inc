@@ -46,7 +46,8 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
 
   try {
     // Attempt the create the response object.
-    $sbpayment_response = new $sbpayment_response_class($_POST);
+    $response_data = !empty($_POST) ? $_POST : array();
+    $sbpayment_response = new $sbpayment_response_class($response_data);
 
     // Set the hash key.
     $sbpayment_response->setHashKey($sbpayment_method['settings']['hash_key']);

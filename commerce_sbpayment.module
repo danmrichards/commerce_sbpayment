@@ -112,11 +112,12 @@ function commerce_sbpayment_services() {
  * @param string $machine_name
  *   Machine name of the service to instantiate.
  *
- * @return mixed
+ * @return bool|\Commerce\SBPayment\SBPayment
  *   An instantiated service object or FALSE if invalid.
  */
 function commerce_sbpayment_get_service_object($machine_name) {
-  $sbpayment_service = commerce_sbpayment_services()[$machine_name];
+  $services = commerce_sbpayment_services();
+  $sbpayment_service = $services[$machine_name];
 
   // Check we have some service info.
   if (empty($sbpayment_service)) {
@@ -130,14 +131,13 @@ function commerce_sbpayment_get_service_object($machine_name) {
 
   // Instantiate the service.
   try {
-    $sbpayment_service_object = new $sbpayment_service['class']();
+    return new $sbpayment_service['class']();
   }
   catch (Exception $e) {
     watchdog_exception('commerce_sbpayment', $e);
-    return FALSE;
   }
 
-  return $sbpayment_service_object;
+  return FALSE;
 }
 
 /**

@@ -37,7 +37,7 @@ function commerce_sbpayment_link_type_settings_form($settings = array()) {
     '#title' => t('Enabled payment methods'),
     '#description' => t('Choose the payment methods available to the customer'),
     '#multiple' => TRUE,
-    '#options' => Methods::$methods,
+    '#options' => Methods::getPaymentMethods(),
     '#default_value' => $settings['pay_methods'],
     '#size' => 15,
     '#required' => TRUE,
@@ -290,11 +290,8 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
 
   try {
     // Attempt the create the response object.
-    $sbpayment_response = new $sbpayment_response_class();
-    $sbpayment_response->setResponseData($_POST);
-
-    // Create the drupal transaction.
-    commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);
+    $response_data = !empty($_POST) ? $_POST : array();
+    $sbpayment_response = new $sbpayment_response_class($response_data);
 
     // Handle each payment result accordingly.
     switch ($sbpayment_response->getRemoteStatus()) {
@@ -317,7 +314,15 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
         commerce_payment_redirect_pane_previous_page($order);
         drupal_set_message(t('Your payment request with the SoftBank Payment Service has expired.'), 'error');
         return FALSE;
+
+      default:
+        commerce_payment_redirect_pane_previous_page($order);
+        drupal_set_message(t('Your payment request with the SoftBank Payment Service was not completed.'), 'error');
+        return FALSE;
     }
+
+    // Create the drupal transaction.
+    commerce_sbpayment_transaction($payment_method, $sbpayment_response, $order);
   }
   catch (SBPaymentException $e) {
     // Log the error.
