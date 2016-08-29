@@ -57,8 +57,8 @@ class Methods {
   /**
    * Get a single payment method by it's machine name.
    *
-   * @return mixed
-   *   Array in the format machine_name => Human Name. Or FALSE if no match.
+   * @return string|bool
+   *   Human readable name of a payment method. Or FALSE if no match.
    */
   public static function getPaymentMethodByMachineName($machine_name) {
     $payment_methods = self::getPaymentMethods();

@@ -380,3 +380,22 @@ function _commerce_sbpayment_prepare_order_number($order) {
 
   return $order_number;
 }
+
+/**
+ * Get the appropriate SoftBank response data from the page request.
+ *
+ * @return array
+ *   Array containing the response data from SoftBank.
+ */
+function _commerce_sbpayment_get_response_data() {
+  switch ($_SERVER['REQUEST_METHOD']) {
+    case 'POST':
+      return $_POST;
+
+    case 'GET':
+      return drupal_get_query_parameters();
+
+    default:
+      return array();
+  }
+}

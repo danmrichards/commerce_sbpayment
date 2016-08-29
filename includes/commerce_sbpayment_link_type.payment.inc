@@ -272,10 +272,13 @@ function commerce_sbpayment_link_type_redirect_form_back($order, $payment_method
  * @see commerce_payment_redirect_pane_checkout_form()
  */
 function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_method) {
+  // Get the response data from the page request.
+  $response_data = _commerce_sbpayment_get_response_data();
+
   // Log the debug data if required.
-  if ((bool) $payment_method['settings']['debug'] === TRUE) {
+  if (!empty($payment_method['settings']['debug'])) {
     watchdog('commerce_sbpayment', 'Payment response debug: <pre>!data</pre>', array(
-      '!data' => var_export($_POST, TRUE),
+      '!data' => var_export($response_data, TRUE),
     ));
   }
 
@@ -290,7 +293,6 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
 
   try {
     // Attempt the create the response object.
-    $response_data = !empty($_POST) ? $_POST : array();
     $sbpayment_response = new $sbpayment_response_class($response_data);
 
     // Handle each payment result accordingly.

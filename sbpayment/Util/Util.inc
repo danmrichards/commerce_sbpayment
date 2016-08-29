@@ -74,7 +74,7 @@ class Util {
     }
 
     // Concatenate the data and append the hash key.
-    $checksum_string = implode('', $data);
+    $checksum_string = implode($data);
     $checksum_string .= $hashKey;
 
     // We need to convert the encoding to allow for japanese characters.

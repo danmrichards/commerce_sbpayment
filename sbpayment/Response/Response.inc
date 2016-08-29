@@ -121,6 +121,8 @@ abstract class Response {
 
     // Everything seems to be alright so set the products.
     $this->products = $products;
+
+    return $this;
   }
 
   /**
@@ -131,6 +133,8 @@ abstract class Response {
    */
   public function setHashKey($hash_key) {
     $this->hashKey = $hash_key;
+
+    return $this;
   }
 
   /**
@@ -215,9 +219,11 @@ abstract class Response {
    * @throws SBPaymentException
    */
   protected function validateProduct(ProductInterface $product) {
+    $product_data = $product->toArray();
+
     // Check that each of the mandatory product fields are populated.
     foreach ($product::getMandatoryFields() as $mandatory_field) {
-      if (!isset($product->toArray()[$mandatory_field])) {
+      if (!isset($product_data[$mandatory_field])) {
         $this->error(sprintf('Mandatory product field %s is not populated', $mandatory_field));
       }
     }

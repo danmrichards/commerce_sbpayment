@@ -23,6 +23,9 @@ use Commerce\SBPayment\SBPaymentException;
  * @see commerce_sbpayment_services()
  */
 function commerce_sbpayment_notification_controller($sbpayment_service_name, $order_id, $payment_redirect_key) {
+  // Get the response data from the page request.
+  $response_data = _commerce_sbpayment_get_response_data();
+
   // Load the relevant payment file include for this service.
   module_load_include('inc', 'commerce_sbpayment', 'includes/commerce_sbpayment_' . $sbpayment_service_name . '.payment');
 
@@ -32,9 +35,9 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
   $sbpayment_method = commerce_payment_method_instance_load($payment_method_instance_id);
 
   // Log the debug data if required.
-  if ((bool) $sbpayment_method['settings']['debug'] === TRUE) {
+  if (!empty($sbpayment_method['settings']['debug'])) {
     watchdog('commerce_sbpayment', 'Payment CGI notification debug: <pre>!data</pre>', array(
-      '!data' => var_export($_POST, TRUE),
+      '!data' => var_export($response_data, TRUE),
     ));
   }
 
@@ -46,7 +49,6 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
 
   try {
     // Attempt the create the response object.
-    $response_data = !empty($_POST) ? $_POST : array();
     $sbpayment_response = new $sbpayment_response_class($response_data);
 
     // Set the hash key.
@@ -77,7 +79,7 @@ function commerce_sbpayment_notification_controller($sbpayment_service_name, $or
     }
 
     // Verify the response data.
-    if ($sbpayment_response->verify() === TRUE) {
+    if ($sbpayment_response->verify()) {
       // Create the drupal transaction.
       commerce_sbpayment_transaction($sbpayment_method, $sbpayment_response, $order);
     }

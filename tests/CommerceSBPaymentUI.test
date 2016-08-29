@@ -24,28 +24,28 @@ class CommerceSBPaymentUI extends CommerceBaseTestCase {
   /**
    * Dummy commerce product.
    *
-   * @var object
+   * @var \stdClass
    */
   protected $product;
 
   /**
    * Admin user account for testing.
    *
-   * @var object
+   * @var \stdClass
    */
   protected $storeAdmin;
 
   /**
    * Customer user account for testing.
    *
-   * @var object
+   * @var \stdClass
    */
   protected $storeCustomer;
 
   /**
    * Order object.
    *
-   * @var object
+   * @var \stdClass
    */
   protected $order;
 
