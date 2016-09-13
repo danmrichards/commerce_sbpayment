@@ -145,7 +145,8 @@ function commerce_sbpayment_link_type_submit_form($payment_method, $pane_values,
  */
 function commerce_sbpayment_link_type_submit_form_validate($payment_method, $pane_form, $pane_values, $order, $form_parents = array()) {
   // Check the selected payment method value is present and valid.
-  if (empty($pane_values['softbank_pay_method']) || !in_array($pane_values['softbank_pay_method'], $payment_method['settings']['pay_methods'])) {
+  $valid_payment_methods = array_keys(_commerce_sbpayment_payment_method_options($payment_method['settings']['pay_methods']));
+  if (empty($pane_values['softbank_pay_method']) || !in_array($pane_values['softbank_pay_method'], $valid_payment_methods)) {
     return FALSE;
   }
 }
