@@ -87,6 +87,16 @@ abstract class SBPayment {
   }
 
   /**
+   * Get the API mode.
+   *
+   * @return string
+   *   String representing the current API mode.
+   */
+  public function getMode() {
+    return $this->mode;
+  }
+
+  /**
    * Set the API mode.
    *
    * @param string $mode

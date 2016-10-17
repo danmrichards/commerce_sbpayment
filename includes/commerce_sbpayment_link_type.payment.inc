@@ -229,8 +229,18 @@ function commerce_sbpayment_link_type_redirect_form($form, &$form_state, $order,
       'success_url' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'cancel_url' => url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
       'error_url' => url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
-      'pagecon_url' => url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $sbpayment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], array('absolute' => TRUE)),
     );
+
+    // Prepare the CGI notification URL.
+    $pagecon_url_options = array('absolute' => TRUE);
+
+    // If we are in test mode the CGI notification URL cannot use HTTPS.
+    if ($sbpayment_service->getMode() == SBPayment::API_MODE_TEST) {
+      $pagecon_url_options['https'] = FALSE;
+    }
+
+    // Set the CGI notification URL.
+    $payment_data['pagecon_url'] = url(COMMERCE_SBPAYMENT_BASE_URL . '/' . $sbpayment_service_machine_name . '/' . $order->order_id . '/' . $order->data['payment_redirect_key'], $pagecon_url_options);
 
     // Build an array of SoftBank product objects for the current order.
     $sbpayment_products = array();
