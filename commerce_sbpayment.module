@@ -374,7 +374,7 @@ function _commerce_sbpayment_prepare_order_number($order) {
   $order_number = $order->order_number;
 
   // Append the number of payment attempts.
-  if (!empty($order->data['softbank']['payment_attempts'])) {
+  if (!empty($order->data['softbank']['payment_attempts']) && $order->data['softbank']['payment_attempts'] > 1) {
     $order_number .= '__' . $order->data['softbank']['payment_attempts'];
   }
 

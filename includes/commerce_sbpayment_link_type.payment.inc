@@ -157,12 +157,15 @@ function commerce_sbpayment_link_type_submit_form_validate($payment_method, $pan
  * @see commerce_payment_pane_checkout_form_submit()
  */
 function commerce_sbpayment_link_type_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
-  // Set the selected SoftBank payment method on the order.
   if (empty($order->data['softbank'])) {
     $order->data['softbank'] = array();
   }
 
+  // Set the selected SoftBank payment method on the order.
   $order->data['softbank']['pay_method'] = $pane_values['softbank_pay_method'];
+
+  // Increment the payment attempts counter.
+  $order->data['softbank']['payment_attempts'] = !empty($order->data['softbank']['payment_attempts']) ? ++$order->data['softbank']['payment_attempts'] : 1;
 }
 
 /**
@@ -259,9 +262,6 @@ function commerce_sbpayment_link_type_redirect_form_back($order, $payment_method
 
   // Remove the payment information from the order data array.
   unset($order->data['softbank']['pay_method']);
-
-  // Increment the payment attempts counter.
-  $order->data['softbank']['payment_attempts'] = !empty($order->data['softbank']['payment_attempts']) ? ++$order->data['softbank']['payment_attempts'] : 1;
 }
 
 /**
@@ -328,9 +328,6 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
     // Log the error.
     watchdog_exception('commerce_sbpayment', $e);
     drupal_set_message(t('A problem occurred when processing your payment with the SoftBank Payment Service. If the problem persists please contact an administrator.'), 'error');
-
-    // Increment the payment attempts counter.
-    $order->data['softbank']['payment_attempts'] = !empty($order->data['softbank']['payment_attempts']) ? ++$order->data['softbank']['payment_attempts'] : 1;
 
     // Store a record of the failed transaction and send the user back to the
     // previous checkout page.
