@@ -78,7 +78,7 @@ class Util {
     $checksum_string .= $hashKey;
 
     // We need to convert the encoding to allow for japanese characters.
-    $checksum_string = mb_convert_encoding($checksum_string, 'UTF-8', 'SJIS');
+    $checksum_string = drupal_convert_to_utf8($checksum_string, 'SJIS');
 
     // Calculate the hash code.
     return strtoupper(sha1($checksum_string));
