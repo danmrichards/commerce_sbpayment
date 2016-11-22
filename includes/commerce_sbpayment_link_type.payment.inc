@@ -305,6 +305,10 @@ function commerce_sbpayment_link_type_redirect_form_validate($order, $payment_me
 
     // Handle each payment result accordingly.
     switch ($sbpayment_response->getRemoteStatus()) {
+      case $sbpayment_response::RESPONSE_OK:
+        commerce_payment_redirect_pane_next_page($order);
+        break;
+
       case $sbpayment_response::RESPONSE_FAIL:
         commerce_payment_redirect_pane_previous_page($order);
         drupal_set_message(t('A problem occurred when processing your payment with the SoftBank Payment Service. If the problem persists please contact an administrator.'), 'error');
